@@ -1188,7 +1188,6 @@ function showPage(id, btn) {
   btn?.classList.add('active');
   const titles = {dashboard:'Dashboard',hoy:'Tareas del día',semana:'Esta semana',clientes:'Clientes',reactivar:'Reactivar clientes',prospectos:'Clínicas y prospectos',ventas:'Ventas mensuales',pipeline:'Estado de clientes'};
   document.getElementById('page-title').textContent = titles[id]||id;
-  if (id === 'stock') { stockLoadData(); stockRenderAll(); }
   document.getElementById('btn-nuevo').style.display = id === 'prospectos' ? 'none' : '';
 }
 
@@ -2690,6 +2689,15 @@ function stockExportCSV() {
   toast('CSV exportado ✓');
 }  
 document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', function() {
+  const origShowPage = window.showPage;
+  window.showPage = function(id, btn) {
+    origShowPage(id, btn);
+    if (id === 'stock') {
+      setTimeout(function() { stockLoadData(); stockRenderAll(); }, 50);
+    }
+  };
+});
 
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => {
