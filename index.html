@@ -258,6 +258,11 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
       <div class="sb-section-label">Análisis</div>
       <button class="nav-item" onclick="showPage('ventas',this)"><span class="ni">💰</span><span>Ventas mensuales</span></button>
       <button class="nav-item" onclick="showPage('pipeline',this)"><span class="ni">📋</span><span>Estado clientes</span></button>
+      </div>
+    <div class="sb-section">
+      <div class="sb-section-label">Inventario</div>
+      <button class="nav-item" onclick="showPage('stock',this)"><span class="ni">📦</span><span>Control de stock</span></button>
+    </div>
     </div>
     <div class="sb-section" style="margin-top:auto">
       <button class="nav-item" onclick="openModalConfig()"><span class="ni">☁️</span><span>Configurar nube</span></button>
@@ -450,6 +455,50 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
       </div>
     
     </div>
+    <div class="page" id="page-stock">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:12px;background:var(--blue-light);border-radius:var(--rs);padding:9px 14px;font-family:sans-serif;font-size:12px;color:var(--blue-text);flex:1;min-width:260px">
+      <span>📅</span>
+      <span style="font-weight:700">Fecha de este recuento:</span>
+      <input type="date" id="stock-fecha-recuento" style="font-size:12px;padding:4px 8px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:sans-serif">
+      <span id="stock-prev-label" style="font-size:11px;opacity:0.8"></span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="stockExportCSV()">💾 Exportar CSV</button>
+      <button class="btn btn-primary btn-sm" onclick="stockGuardarRecuento()">✅ Guardar recuento</button>
+      <button class="btn btn-secondary btn-sm" onclick="stockMostrarHistorial()">📊 Ver historial</button>
+    </div>
+  </div>
+  <div class="stat-grid" id="stock-stats" style="margin-bottom:1.25rem"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="stock-search" placeholder="Buscar producto..." oninput="stockRenderAll()">
+    </div>
+    <select class="form-select" id="stock-filter-cat" style="max-width:180px;font-size:12px" onchange="stockRenderAll()">
+      <option value="">Todas las categorías</option>
+      <option>Brackets</option><option>Arcos</option><option>Tubos</option>
+      <option>Botones linguales</option><option>Elastómeros</option>
+      <option>Alambres</option><option>Resortes</option><option>Hooks</option>
+    </select>
+    <select class="form-select" id="stock-filter-status" style="max-width:180px;font-size:12px" onchange="stockRenderAll()">
+      <option value="">Todos los estados</option>
+      <option value="danger">Sin stock</option>
+      <option value="warn">Stock bajo (&lt;6m)</option>
+      <option value="ok">OK (≥6m)</option>
+    </select>
+  </div>
+  <div id="stock-sections"></div>
+  <div id="stock-historial-panel" style="display:none;margin-top:1.5rem">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div class="section-title" style="margin:0;border:none;padding:0">📊 Historial de recuentos</div>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('stock-historial-panel').style.display='none'">Cerrar</button>
+      </div>
+      <div id="stock-historial-content"></div>
+    </div>
+  </div>
+</div>
     <div class="page" id="page-pipeline">
       <div class="alert alert-blue mb-16"><strong>Vista por estado:</strong> clientes agrupados. Click en cualquiera para abrir su ficha.</div>
       <div class="kanban-board" id="kanban-board"></div>
@@ -2246,6 +2295,399 @@ function toast(msg) {
   setTimeout(()=>el.classList.remove('show'), 2800);
 }
 
+// ============================================================
+// MÓDULO DE STOCK
+// ============================================================
+const STOCK_PRODUCTS = [
+  {id:'brk-met',cat:'Brackets',sub:'',name:'Metálicos',unit:'caja x20'},
+  {id:'brk-cer-co',cat:'Brackets',sub:'',name:'Cerámicos Class One',unit:'caja x20'},
+  {id:'brk-cer-sky',cat:'Brackets',sub:'',name:'Cerámicos SkyOrtho',unit:'caja x20'},
+  {id:'brk-lin',cat:'Brackets',sub:'',name:'Linguales',unit:'caja x20'},
+  {id:'brk-aut',cat:'Brackets',sub:'',name:'Autoligables',unit:'caja x20'},
+  {id:'brk-zaf',cat:'Brackets',sub:'',name:'Zafiro',unit:'caja x20'},
+  {id:'arc-niti-012s',cat:'Arcos',sub:'Niti redondo 0.12',name:'0.12 superior',unit:'pack x10'},
+  {id:'arc-niti-012i',cat:'Arcos',sub:'Niti redondo 0.12',name:'0.12 inferior',unit:'pack x10'},
+  {id:'arc-niti-014s',cat:'Arcos',sub:'Niti redondo 0.14',name:'0.14 superior',unit:'pack x10'},
+  {id:'arc-niti-014i',cat:'Arcos',sub:'Niti redondo 0.14',name:'0.14 inferior',unit:'pack x10'},
+  {id:'arc-niti-016s',cat:'Arcos',sub:'Niti redondo 0.16',name:'0.16 superior',unit:'pack x10'},
+  {id:'arc-niti-016i',cat:'Arcos',sub:'Niti redondo 0.16',name:'0.16 inferior',unit:'pack x10'},
+  {id:'arc-niti-018s',cat:'Arcos',sub:'Niti redondo 0.18',name:'0.18 superior',unit:'pack x10'},
+  {id:'arc-niti-018i',cat:'Arcos',sub:'Niti redondo 0.18',name:'0.18 inferior',unit:'pack x10'},
+  {id:'arc-niti-020s',cat:'Arcos',sub:'Niti redondo 0.20',name:'0.20 superior',unit:'pack x10'},
+  {id:'arc-niti-020i',cat:'Arcos',sub:'Niti redondo 0.20',name:'0.20 inferior',unit:'pack x10'},
+  {id:'arc-acero-012s',cat:'Arcos',sub:'Acero redondo 0.12',name:'0.12 superior',unit:'pack x10'},
+  {id:'arc-acero-012i',cat:'Arcos',sub:'Acero redondo 0.12',name:'0.12 inferior',unit:'pack x10'},
+  {id:'arc-acero-014s',cat:'Arcos',sub:'Acero redondo 0.14',name:'0.14 superior',unit:'pack x10'},
+  {id:'arc-acero-014i',cat:'Arcos',sub:'Acero redondo 0.14',name:'0.14 inferior',unit:'pack x10'},
+  {id:'arc-acero-016s',cat:'Arcos',sub:'Acero redondo 0.16',name:'0.16 superior',unit:'pack x10'},
+  {id:'arc-acero-016i',cat:'Arcos',sub:'Acero redondo 0.16',name:'0.16 inferior',unit:'pack x10'},
+  {id:'arc-acero-018s',cat:'Arcos',sub:'Acero redondo 0.18',name:'0.18 superior',unit:'pack x10'},
+  {id:'arc-acero-018i',cat:'Arcos',sub:'Acero redondo 0.18',name:'0.18 inferior',unit:'pack x10'},
+  {id:'arc-acero-020s',cat:'Arcos',sub:'Acero redondo 0.20',name:'0.20 superior',unit:'pack x10'},
+  {id:'arc-acero-020i',cat:'Arcos',sub:'Acero redondo 0.20',name:'0.20 inferior',unit:'pack x10'},
+  {id:'arc-niti-rect-1616s',cat:'Arcos',sub:'Niti rectangular 16x16',name:'16x16 superior',unit:'pack x10'},
+  {id:'arc-niti-rect-1616i',cat:'Arcos',sub:'Niti rectangular 16x16',name:'16x16 inferior',unit:'pack x10'},
+  {id:'arc-niti-rect-1925s',cat:'Arcos',sub:'Niti rectangular 19x25',name:'19x25 superior',unit:'pack x10'},
+  {id:'arc-niti-rect-1925i',cat:'Arcos',sub:'Niti rectangular 19x25',name:'19x25 inferior',unit:'pack x10'},
+  {id:'arc-niti-rect-1725s',cat:'Arcos',sub:'Niti rectangular 17x25',name:'17x25 superior',unit:'pack x10'},
+  {id:'arc-niti-rect-1725i',cat:'Arcos',sub:'Niti rectangular 17x25',name:'17x25 inferior',unit:'pack x10'},
+  {id:'arc-niti-rect-1822s',cat:'Arcos',sub:'Niti rectangular 18x22',name:'18x22 superior',unit:'pack x10'},
+  {id:'arc-niti-rect-1822i',cat:'Arcos',sub:'Niti rectangular 18x22',name:'18x22 inferior',unit:'pack x10'},
+  {id:'arc-niti-rect-1622s',cat:'Arcos',sub:'Niti rectangular 16x22',name:'16x22 superior',unit:'pack x10'},
+  {id:'arc-niti-rect-1622i',cat:'Arcos',sub:'Niti rectangular 16x22',name:'16x22 inferior',unit:'pack x10'},
+  {id:'arc-niti-rect-1825s',cat:'Arcos',sub:'Niti rectangular 18x25',name:'18x25 superior',unit:'pack x10'},
+  {id:'arc-niti-rect-1825i',cat:'Arcos',sub:'Niti rectangular 18x25',name:'18x25 inferior',unit:'pack x10'},
+  {id:'arc-niti-rect-2125s',cat:'Arcos',sub:'Niti rectangular 21x25',name:'21x25 superior',unit:'pack x10'},
+  {id:'arc-niti-rect-2125i',cat:'Arcos',sub:'Niti rectangular 21x25',name:'21x25 inferior',unit:'pack x10'},
+  {id:'arc-acero-rect-1616s',cat:'Arcos',sub:'Acero rectangular 16x16',name:'16x16 superior',unit:'pack x10'},
+  {id:'arc-acero-rect-1616i',cat:'Arcos',sub:'Acero rectangular 16x16',name:'16x16 inferior',unit:'pack x10'},
+  {id:'arc-acero-rect-1925s',cat:'Arcos',sub:'Acero rectangular 19x25',name:'19x25 superior',unit:'pack x10'},
+  {id:'arc-acero-rect-1925i',cat:'Arcos',sub:'Acero rectangular 19x25',name:'19x25 inferior',unit:'pack x10'},
+  {id:'arc-acero-rect-1725s',cat:'Arcos',sub:'Acero rectangular 17x25',name:'17x25 superior',unit:'pack x10'},
+  {id:'arc-acero-rect-1725i',cat:'Arcos',sub:'Acero rectangular 17x25',name:'17x25 inferior',unit:'pack x10'},
+  {id:'arc-acero-rect-1822s',cat:'Arcos',sub:'Acero rectangular 18x22',name:'18x22 superior',unit:'pack x10'},
+  {id:'arc-acero-rect-1822i',cat:'Arcos',sub:'Acero rectangular 18x22',name:'18x22 inferior',unit:'pack x10'},
+  {id:'arc-acero-rect-1622s',cat:'Arcos',sub:'Acero rectangular 16x22',name:'16x22 superior',unit:'pack x10'},
+  {id:'arc-acero-rect-1622i',cat:'Arcos',sub:'Acero rectangular 16x22',name:'16x22 inferior',unit:'pack x10'},
+  {id:'arc-acero-rect-1825s',cat:'Arcos',sub:'Acero rectangular 18x25',name:'18x25 superior',unit:'pack x10'},
+  {id:'arc-acero-rect-1825i',cat:'Arcos',sub:'Acero rectangular 18x25',name:'18x25 inferior',unit:'pack x10'},
+  {id:'arc-acero-rect-2125s',cat:'Arcos',sub:'Acero rectangular 21x25',name:'21x25 superior',unit:'pack x10'},
+  {id:'arc-acero-rect-2125i',cat:'Arcos',sub:'Acero rectangular 21x25',name:'21x25 inferior',unit:'pack x10'},
+  {id:'arc-termo-012s',cat:'Arcos',sub:'Termoactivado 0.12',name:'0.12 superior',unit:'pack x10'},
+  {id:'arc-termo-012i',cat:'Arcos',sub:'Termoactivado 0.12',name:'0.12 inferior',unit:'pack x10'},
+  {id:'arc-termo-014s',cat:'Arcos',sub:'Termoactivado 0.14',name:'0.14 superior',unit:'pack x10'},
+  {id:'arc-termo-014i',cat:'Arcos',sub:'Termoactivado 0.14',name:'0.14 inferior',unit:'pack x10'},
+  {id:'arc-termo-016s',cat:'Arcos',sub:'Termoactivado 0.16',name:'0.16 superior',unit:'pack x10'},
+  {id:'arc-termo-016i',cat:'Arcos',sub:'Termoactivado 0.16',name:'0.16 inferior',unit:'pack x10'},
+  {id:'arc-termo-018s',cat:'Arcos',sub:'Termoactivado 0.18',name:'0.18 superior',unit:'pack x10'},
+  {id:'arc-termo-018i',cat:'Arcos',sub:'Termoactivado 0.18',name:'0.18 inferior',unit:'pack x10'},
+  {id:'arc-termo-020s',cat:'Arcos',sub:'Termoactivado 0.20',name:'0.20 superior',unit:'pack x10'},
+  {id:'arc-termo-020i',cat:'Arcos',sub:'Termoactivado 0.20',name:'0.20 inferior',unit:'pack x10'},
+  {id:'arc-cr-012s',cat:'Arcos',sub:'Curva reversa 0.12',name:'0.12 superior',unit:'pack x2'},
+  {id:'arc-cr-012i',cat:'Arcos',sub:'Curva reversa 0.12',name:'0.12 inferior',unit:'pack x2'},
+  {id:'arc-cr-014s',cat:'Arcos',sub:'Curva reversa 0.14',name:'0.14 superior',unit:'pack x2'},
+  {id:'arc-cr-014i',cat:'Arcos',sub:'Curva reversa 0.14',name:'0.14 inferior',unit:'pack x2'},
+  {id:'arc-cr-016s',cat:'Arcos',sub:'Curva reversa 0.16',name:'0.16 superior',unit:'pack x2'},
+  {id:'arc-cr-016i',cat:'Arcos',sub:'Curva reversa 0.16',name:'0.16 inferior',unit:'pack x2'},
+  {id:'arc-cr-018s',cat:'Arcos',sub:'Curva reversa 0.18',name:'0.18 superior',unit:'pack x2'},
+  {id:'arc-cr-018i',cat:'Arcos',sub:'Curva reversa 0.18',name:'0.18 inferior',unit:'pack x2'},
+  {id:'arc-cr-020s',cat:'Arcos',sub:'Curva reversa 0.20',name:'0.20 superior',unit:'pack x2'},
+  {id:'arc-cr-020i',cat:'Arcos',sub:'Curva reversa 0.20',name:'0.20 inferior',unit:'pack x2'},
+  {id:'arc-est-012s',cat:'Arcos',sub:'Estético 0.12',name:'0.12 superior',unit:'pack x10'},
+  {id:'arc-est-012i',cat:'Arcos',sub:'Estético 0.12',name:'0.12 inferior',unit:'pack x10'},
+  {id:'arc-est-014s',cat:'Arcos',sub:'Estético 0.14',name:'0.14 superior',unit:'pack x10'},
+  {id:'arc-est-014i',cat:'Arcos',sub:'Estético 0.14',name:'0.14 inferior',unit:'pack x10'},
+  {id:'arc-est-016s',cat:'Arcos',sub:'Estético 0.16',name:'0.16 superior',unit:'pack x10'},
+  {id:'arc-est-016i',cat:'Arcos',sub:'Estético 0.16',name:'0.16 inferior',unit:'pack x10'},
+  {id:'arc-est-018s',cat:'Arcos',sub:'Estético 0.18',name:'0.18 superior',unit:'pack x10'},
+  {id:'arc-est-018i',cat:'Arcos',sub:'Estético 0.18',name:'0.18 inferior',unit:'pack x10'},
+  {id:'arc-est-020s',cat:'Arcos',sub:'Estético 0.20',name:'0.20 superior',unit:'pack x10'},
+  {id:'arc-est-020i',cat:'Arcos',sub:'Estético 0.20',name:'0.20 inferior',unit:'pack x10'},
+  {id:'tub-1s',cat:'Tubos',sub:'',name:'Tubo primer molar simple',unit:'caja x10'},
+  {id:'tub-2s',cat:'Tubos',sub:'',name:'Tubo segundo molar simple',unit:'caja x10'},
+  {id:'tub-caja',cat:'Tubos',sub:'',name:'Caja de tubos',unit:'caja'},
+  {id:'bot-lin',cat:'Botones linguales',sub:'',name:'Botones linguales',unit:'bolsa'},
+  {id:'ela-gom-18l',cat:'Elastómeros',sub:'Gomas 1/8',name:'1/8 light',unit:'bolsa'},
+  {id:'ela-gom-18m',cat:'Elastómeros',sub:'Gomas 1/8',name:'1/8 medium',unit:'bolsa'},
+  {id:'ela-gom-18h',cat:'Elastómeros',sub:'Gomas 1/8',name:'1/8 heavy',unit:'bolsa'},
+  {id:'ela-gom-316l',cat:'Elastómeros',sub:'Gomas 3/16',name:'3/16 light',unit:'bolsa'},
+  {id:'ela-gom-316m',cat:'Elastómeros',sub:'Gomas 3/16',name:'3/16 medium',unit:'bolsa'},
+  {id:'ela-gom-316h',cat:'Elastómeros',sub:'Gomas 3/16',name:'3/16 heavy',unit:'bolsa'},
+  {id:'ela-gom-516l',cat:'Elastómeros',sub:'Gomas 5/16',name:'5/16 light',unit:'bolsa'},
+  {id:'ela-gom-516m',cat:'Elastómeros',sub:'Gomas 5/16',name:'5/16 medium',unit:'bolsa'},
+  {id:'ela-gom-516h',cat:'Elastómeros',sub:'Gomas 5/16',name:'5/16 heavy',unit:'bolsa'},
+  {id:'ela-bas-tra',cat:'Elastómeros',sub:'Bastones',name:'Transparentes',unit:'bolsa'},
+  {id:'ela-bas-gri',cat:'Elastómeros',sub:'Bastones',name:'Grises',unit:'bolsa'},
+  {id:'ela-bas-mul',cat:'Elastómeros',sub:'Bastones',name:'Multicolor',unit:'bolsa'},
+  {id:'ela-cad-tra-con',cat:'Elastómeros',sub:'Cadenas transparentes',name:'Continua',unit:'rollo'},
+  {id:'ela-cad-tra-cor',cat:'Elastómeros',sub:'Cadenas transparentes',name:'Corta',unit:'rollo'},
+  {id:'ela-cad-tra-lar',cat:'Elastómeros',sub:'Cadenas transparentes',name:'Larga',unit:'rollo'},
+  {id:'ela-cad-gri-con',cat:'Elastómeros',sub:'Cadenas grises',name:'Continua',unit:'rollo'},
+  {id:'ela-cad-gri-cor',cat:'Elastómeros',sub:'Cadenas grises',name:'Corta',unit:'rollo'},
+  {id:'ela-cad-gri-lar',cat:'Elastómeros',sub:'Cadenas grises',name:'Larga',unit:'rollo'},
+  {id:'ela-sep',cat:'Elastómeros',sub:'',name:'Separadores en S',unit:'bolsa'},
+  {id:'ala-lig',cat:'Alambres',sub:'',name:'Ligadura metálica en rollo 0.25mm',unit:'rollo'},
+  {id:'res-010',cat:'Resortes',sub:'',name:'Resortes espiras abiertas 0.010 x2',unit:'pack x2'},
+  {id:'res-012',cat:'Resortes',sub:'',name:'Niti open spring 0.012 rollo 900mm',unit:'rollo'},
+  {id:'hoo-mid',cat:'Hooks',sub:'',name:'Crimpable hook middle 5.5mm',unit:'unidad'},
+  {id:'hoo-sho',cat:'Hooks',sub:'',name:'Crimpable hook short 2.09mm',unit:'unidad'},
+];
+
+let stockData = {};
+let stockHistorial = [];
+
+function stockLoadData() {
+  try {
+    const sd = localStorage.getItem('gvd_stock_data');
+    const sh = localStorage.getItem('gvd_stock_historial');
+    if (sd) stockData = JSON.parse(sd);
+    if (sh) stockHistorial = JSON.parse(sh);
+    const fechaEl = document.getElementById('stock-fecha-recuento');
+    if (fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().slice(0,10);
+    stockUpdateLastLabel();
+  } catch(e) {}
+}
+
+function stockSaveData() {
+  localStorage.setItem('gvd_stock_data', JSON.stringify(stockData));
+  localStorage.setItem('gvd_stock_historial', JSON.stringify(stockHistorial));
+}
+
+function stockCalcAvg(id, currentQty) {
+  if (stockHistorial.length === 0) return null;
+  const last = stockHistorial[stockHistorial.length - 1];
+  const snap = last.snapshot || {};
+  const prevQty = snap[id] !== undefined ? snap[id].qty : null;
+  if (prevQty === null || prevQty === '' || currentQty === '' || currentQty === undefined) return null;
+  const diff = (parseFloat(prevQty) || 0) - (parseFloat(currentQty) || 0);
+  if (diff <= 0) return null;
+  return Math.round((diff / 3) * 10) / 10;
+}
+
+function stockCalcAvg12m(id) {
+  if (stockHistorial.length < 4) return null;
+  const last4 = stockHistorial.slice(-4);
+  const oldest = last4[0].snapshot || {};
+  const newest = last4[last4.length - 1].snapshot || {};
+  const qOld = oldest[id]?.qty;
+  const qNew = newest[id]?.qty;
+  if (qOld === undefined || qNew === undefined || qOld === '' || qNew === '') return null;
+  const total = (parseFloat(qOld) || 0) - (parseFloat(qNew) || 0);
+  if (total <= 0) return null;
+  return Math.round((total / 12) * 10) / 10;
+}
+
+function stockGetStatus(qty, avg) {
+  if (qty === undefined || qty === null || qty === '') return 'neutral';
+  qty = parseFloat(qty) || 0;
+  if (qty === 0) return 'danger';
+  if (!avg || avg === 0) return 'neutral';
+  return (qty / avg) < 6 ? 'warn' : 'ok';
+}
+
+function stockGetMeses(qty, avg) {
+  if (qty === '' || qty === undefined || !avg || avg === 0) return null;
+  return Math.round((parseFloat(qty) || 0) / avg * 10) / 10;
+}
+
+function stockUpdateLastLabel() {
+  const el = document.getElementById('stock-prev-label');
+  if (!el) return;
+  if (stockHistorial.length > 0) {
+    el.textContent = '· Último recuento: ' + stockHistorial[stockHistorial.length - 1].fecha;
+  }
+}
+
+function stockRenderAll() {
+  stockLoadData();
+  const search = (document.getElementById('stock-search')?.value || '').toLowerCase();
+  const filterCat = document.getElementById('stock-filter-cat')?.value || '';
+  const filterStatus = document.getElementById('stock-filter-status')?.value || '';
+  let sinStock = 0, bajo = 0, ok = 0;
+  STOCK_PRODUCTS.forEach(p => {
+    const d = stockData[p.id] || {};
+    const qty = d.qty !== undefined ? d.qty : '';
+    if (qty === '' || qty === undefined) return;
+    const avg = stockCalcAvg(p.id, qty) || stockCalcAvg12m(p.id);
+    const s = stockGetStatus(qty, avg);
+    if (s === 'danger') sinStock++;
+    else if (s === 'warn') bajo++;
+    else if (s === 'ok') ok++;
+  });
+  const statsEl = document.getElementById('stock-stats');
+  if (statsEl) statsEl.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Productos</div><div class="stat-value">${STOCK_PRODUCTS.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Sin stock</div><div class="stat-value" style="color:var(--red)">${sinStock}</div></div>
+    <div class="stat-card"><div class="stat-label">Stock bajo (&lt;6m)</div><div class="stat-value" style="color:var(--amber)">${bajo}</div></div>
+    <div class="stat-card"><div class="stat-label">OK (≥6m)</div><div class="stat-value" style="color:var(--green)">${ok}</div></div>
+    <div class="stat-card"><div class="stat-label">Recuentos guardados</div><div class="stat-value">${stockHistorial.length}</div></div>
+  `;
+  const cats = {};
+  STOCK_PRODUCTS.forEach(p => {
+    if (filterCat && filterCat !== p.cat) return;
+    if (search && !p.name.toLowerCase().includes(search) && !p.sub.toLowerCase().includes(search) && !p.cat.toLowerCase().includes(search)) return;
+    const d = stockData[p.id] || {};
+    const qty = d.qty !== undefined ? d.qty : '';
+    const avg3m = stockCalcAvg(p.id, qty);
+    const avg12m = stockCalcAvg12m(p.id);
+    const avgUsed = avg3m || avg12m;
+    const status = stockGetStatus(qty, avgUsed);
+    if (filterStatus && filterStatus !== status) return;
+    if (!cats[p.cat]) cats[p.cat] = {};
+    const sub = p.sub || '_';
+    if (!cats[p.cat][sub]) cats[p.cat][sub] = [];
+    cats[p.cat][sub].push({...p, qty, avg3m, avg12m, avgUsed, status});
+  });
+  const container = document.getElementById('stock-sections');
+  if (!container) return;
+  container.innerHTML = '';
+  Object.entries(cats).forEach(([cat, subs]) => {
+    const total = Object.values(subs).reduce((s,a)=>s+a.length,0);
+    let rows = '';
+    Object.entries(subs).forEach(([sub, prods]) => {
+      if (sub !== '_') rows += `<tr><td colspan="7" style="padding:5px 12px;font-size:11px;font-weight:700;color:var(--text2);background:var(--surface2);border-bottom:1px solid var(--border)">${sub}</td></tr>`;
+      prods.forEach(p => {
+        const meses = stockGetMeses(p.qty, p.avgUsed);
+        let badge = '';
+        if (p.status === 'danger') badge = '<span class="badge br">Sin stock</span>';
+        else if (p.status === 'warn') badge = `<span class="badge ba">${meses !== null ? meses+'m' : 'Bajo'}</span>`;
+        else if (p.status === 'ok') badge = `<span class="badge bg">${meses !== null ? meses+'m' : 'OK'}</span>`;
+        else badge = '<span style="color:var(--text3);font-size:11px">—</span>';
+        rows += `<tr data-id="${p.id}" style="border-bottom:1px solid var(--border)">
+          <td style="padding:7px 12px;padding-left:${sub==='_'?'12px':'24px'}">${p.name}</td>
+          <td style="padding:7px 12px;color:var(--text3);font-size:11px">${p.unit}</td>
+          <td style="padding:7px 12px"><input type="number" min="0" step="1" value="${p.qty}" placeholder="—" onchange="stockUpdateQty('${p.id}',this.value)" style="width:72px;font-size:12px;padding:4px 8px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface);color:var(--text);text-align:right;font-family:sans-serif"></td>
+          <td style="padding:7px 12px;color:var(--text2);font-family:sans-serif;font-size:12px">${p.avg3m !== null ? p.avg3m : '—'}</td>
+          <td style="padding:7px 12px;color:var(--text2);font-family:sans-serif;font-size:12px">${p.avg12m !== null ? p.avg12m : '—'}</td>
+          <td style="padding:7px 12px">${badge}</td>
+          <td style="padding:7px 12px"><button class="btn-icon btn-sm" title="Registrar compra" onclick="stockRegistrarCompra('${p.id}','${p.name}')">🛒</button></td>
+        </tr>`;
+      });
+    });
+    const sec = document.createElement('div');
+    sec.className = 'card';
+    sec.style.marginBottom = '14px';
+    sec.style.padding = '0';
+    sec.style.overflow = 'hidden';
+    sec.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);cursor:pointer;user-select:none" onclick="stockToggleSection(this)">
+        <span style="font-size:13px;font-weight:700;font-family:sans-serif">${cat} <span style="font-size:11px;font-weight:400;color:var(--text3)">(${total})</span></span>
+        <span style="font-size:12px;color:var(--text3)">▼</span>
+      </div>
+      <div class="table-wrap" style="display:block">
+        <table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px">
+          <thead><tr style="background:var(--surface2)">
+            <th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Producto</th>
+            <th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Unidad</th>
+            <th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Stock actual</th>
+            <th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Prom. 3m</th>
+            <th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Prom. 12m</th>
+            <th style="padding:7px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Cobertura</th>
+            <th style="padding:7px 12px;width:40px"></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    container.appendChild(sec);
+  });
+}
+
+function stockToggleSection(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('span:last-child');
+  body.style.display = body.style.display === 'none' ? 'block' : 'none';
+  if (arrow) arrow.textContent = body.style.display === 'none' ? '▶' : '▼';
+}
+
+function stockUpdateQty(id, val) {
+  if (!stockData[id]) stockData[id] = {};
+  stockData[id].qty = val === '' ? '' : parseFloat(val) || 0;
+  stockSaveData();
+  stockRenderAll();
+}
+
+function stockGuardarRecuento() {
+  const fecha = document.getElementById('stock-fecha-recuento')?.value;
+  if (!fecha) { toast('Ingresá la fecha del recuento'); return; }
+  const snapshot = {};
+  STOCK_PRODUCTS.forEach(p => {
+    if (stockData[p.id]) snapshot[p.id] = JSON.parse(JSON.stringify(stockData[p.id]));
+  });
+  stockHistorial.push({ fecha, snapshot });
+  stockSaveData();
+  stockUpdateLastLabel();
+  toast('✅ Recuento guardado: ' + fecha);
+  stockRenderAll();
+}
+
+function stockRegistrarCompra(id, nombre) {
+  const cant = prompt('Registrar compra de ' + nombre + '\n¿Cuántas unidades compraste?');
+  if (!cant || isNaN(cant) || parseFloat(cant) <= 0) return;
+  const current = parseFloat(stockData[id]?.qty) || 0;
+  if (!stockData[id]) stockData[id] = {};
+  stockData[id].qty = current + parseFloat(cant);
+  if (!stockData[id].compras) stockData[id].compras = [];
+  stockData[id].compras.push({ fecha: new Date().toISOString().slice(0,10), cant: parseFloat(cant) });
+  stockSaveData();
+  stockRenderAll();
+  toast('✅ Compra registrada: +' + cant + ' unidades de ' + nombre);
+}
+
+function stockMostrarHistorial() {
+  const panel = document.getElementById('stock-historial-panel');
+  const content = document.getElementById('stock-historial-content');
+  if (!panel || !content) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'none') return;
+  if (!stockHistorial.length) {
+    content.innerHTML = '<p class="text-muted">No hay recuentos guardados todavía.</p>';
+    return;
+  }
+  const last4 = stockHistorial.slice(-4);
+  const cols = last4.map(h => h.fecha);
+  const catData = {};
+  STOCK_PRODUCTS.forEach(p => {
+    if (!catData[p.cat]) catData[p.cat] = {};
+    cols.forEach((fecha, i) => {
+      const snap = last4[i].snapshot || {};
+      const qty = snap[p.id]?.qty || 0;
+      catData[p.cat][fecha] = (catData[p.cat][fecha] || 0) + (parseFloat(qty) || 0);
+    });
+  });
+  content.innerHTML = `
+    <div style="overflow-x:auto;margin-bottom:20px">
+      <table style="width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px">
+        <thead><tr style="background:var(--surface2)">
+          <th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Categoría</th>
+          ${cols.map(f=>`<th style="padding:8px 12px;text-align:right;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">${f}</th>`).join('')}
+        </tr></thead>
+        <tbody>
+          ${Object.entries(catData).map(([cat,datos])=>`<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:7px 12px;font-weight:600">${cat}</td>
+            ${cols.map(f=>`<td style="padding:7px 12px;text-align:right;font-family:monospace">${Math.round(datos[f]||0)}</td>`).join('')}
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div class="section-title">Recuentos guardados</div>
+    ${stockHistorial.slice().reverse().map(h=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-family:sans-serif;font-size:12px">
+        <span style="font-weight:600">${h.fecha}</span>
+        <span style="color:var(--text3)">${Object.keys(h.snapshot||{}).length} productos registrados</span>
+        <button class="btn btn-secondary btn-sm" onclick="stockEliminarRecuento('${h.fecha}')">🗑</button>
+      </div>`).join('')}
+  `;
+}
+
+function stockEliminarRecuento(fecha) {
+  if (!confirm('¿Eliminar el recuento del ' + fecha + '?')) return;
+  stockHistorial = stockHistorial.filter(h => h.fecha !== fecha);
+  stockSaveData();
+  stockMostrarHistorial();
+  stockRenderAll();
+  toast('Recuento eliminado');
+}
+
+function stockExportCSV() {
+  let csv = 'Categoría,Subgrupo,Producto,Unidad,Stock actual,Prom. 3m,Prom. 12m,Meses cobertura,Estado\n';
+  STOCK_PRODUCTS.forEach(p => {
+    const d = stockData[p.id] || {};
+    const qty = d.qty !== undefined ? d.qty : '';
+    const avg3m = stockCalcAvg(p.id, qty);
+    const avg12m = stockCalcAvg12m(p.id);
+    const avgUsed = avg3m || avg12m;
+    const meses = stockGetMeses(qty, avgUsed);
+    const status = stockGetStatus(qty, avgUsed);
+    const statusLabel = status==='danger'?'Sin stock':status==='warn'?'Stock bajo':status==='ok'?'OK':'—';
+    csv += `"${p.cat}","${p.sub}","${p.name}","${p.unit}","${qty}","${avg3m!==null?avg3m:''}","${avg12m!==null?avg12m:''}","${meses!==null?meses:''}","${statusLabel}"\n`;
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'stock-guevaldent-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('CSV exportado ✓');
+}  
 document.addEventListener('DOMContentLoaded', init);
 
 document.addEventListener('DOMContentLoaded', function() {
