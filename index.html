@@ -906,6 +906,7 @@ async function loadFromCloud() {
     console.error('Cloud load error:', err);
     setSyncStatus('error');
     toast('⚠️ Usando datos locales (no se pudo conectar a la nube)');
+    renderAll();
     return false;
   }
 }
