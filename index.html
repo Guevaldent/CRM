@@ -1188,6 +1188,7 @@ function showPage(id, btn) {
   btn?.classList.add('active');
   const titles = {dashboard:'Dashboard',hoy:'Tareas del día',semana:'Esta semana',clientes:'Clientes',reactivar:'Reactivar clientes',prospectos:'Clínicas y prospectos',ventas:'Ventas mensuales',pipeline:'Estado de clientes'};
   document.getElementById('page-title').textContent = titles[id]||id;
+  if (id === 'stock') { stockLoadData(); stockRenderAll(); }
   document.getElementById('btn-nuevo').style.display = id === 'prospectos' ? 'none' : '';
 }
 
