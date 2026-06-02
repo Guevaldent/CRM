@@ -1187,7 +1187,7 @@ function showPage(id, btn) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   btn?.classList.add('active');
-  const titles = {dashboard:'Dashboard',hoy:'Tareas del día',semana:'Esta semana',clientes:'Clientes',reactivar:'Reactivar clientes',prospectos:'Clínicas y prospectos',ventas:'Ventas mensuales',pipeline:'Estado de clientes'};
+  const titles = {dashboard:'Dashboard',hoy:'Tareas del día',semana:'Esta semana',clientes:'Clientes',reactivar:'Reactivar clientes',prospectos:'Clínicas y prospectos',ventas:'Ventas mensuales',pipeline:'Estado de clientes',stock:'Control de stock'};
   document.getElementById('page-title').textContent = titles[id]||id;
   document.getElementById('btn-nuevo').style.display = id === 'prospectos' ? 'none' : '';
 }
