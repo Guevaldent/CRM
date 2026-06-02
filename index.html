@@ -372,9 +372,10 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Monto en pesos ($)</label>
-<input type="text" class="form-input" id="v-monto-pesos" placeholder="Ej: 120000+45000+80000" oninput="calcularConversion()">            <div class="form-group">
+<input type="text" class="form-input" id="v-monto-pesos" placeholder="Ej: 120000+45000+80000" oninput="calcularDesdeExpresion()">            </div>
+            <div class="form-group">
               <label class="form-label">Tipo de cambio ($/USD)</label>
-              <input type="text" class="form-input" id="v-tc" placeholder="1500" oninput="calcularConversion()">
+              <input type="number" class="form-input" id="v-tc" placeholder="1500" oninput="calcularConversion()">
             </div>
           </div>
           <div id="v-conversion" style="background:var(--green-light);border-radius:var(--rs);padding:8px 12px;font-family:sans-serif;font-size:12px;color:var(--green-text);margin-bottom:14px;display:none">
@@ -1407,21 +1408,7 @@ function initVentasUI() {
   renderTablaVentas();
 }
 
-function calcularConversion() {
-  const input = document.getElementById('v-monto-pesos');
-  const expr = String(input.value).replace(/[^0-9+\-*/.() ]/g, '');
-  let pesos = 0;
-  try { if (expr) pesos = Math.round(eval(expr)) || 0; } catch(e) {}
-  const tc = parseFloat(document.getElementById('v-tc').value) || 0;
-  const el = document.getElementById('v-conversion');
-  const usdEl = document.getElementById('v-usd-result');
-  if (pesos > 0 && tc > 0) {
-    usdEl.textContent = 'US$' + Math.round(pesos / tc * 100) / 100;
-    el.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-  }
-} function calcularDesdeExpresion() {
+function calcularConversion() { function calcularDesdeExpresion() {
   const input = document.getElementById('v-monto-pesos');
   const expr = input.value.replace(/[^0-9+\-*/.() ]/g, '');
   let resultado = 0;
