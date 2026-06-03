@@ -1410,8 +1410,8 @@ function initVentasUI() {
 }
 
 function calcularConversion() {
-  const pesos = parseFloat(document.getElementById('v-monto-pesos').value) || 0;
-  const tc = parseFloat(document.getElementById('v-tc').value) || 0;
+const raw = document.getElementById('v-monto-pesos').value;
+  const pesos = (() => { try { return Math.round(eval(raw.replace(/[^0-9+\-*.() ]/g,''))) || 0; } catch(e) { return 0; } })();  const tc = parseFloat(document.getElementById('v-tc').value) || 0;
   const el = document.getElementById('v-conversion');
   const usdEl = document.getElementById('v-usd-result');
   if (pesos > 0 && tc > 0) {
