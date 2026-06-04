@@ -371,6 +371,10 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
           </div>
           <div class="form-row">
             <div class="form-group">
+    <div class="form-group">
+              <label class="form-label">Calculadora (opcional)</label>
+              <input type="text" class="form-input" placeholder="Ej: 120000 + 45000 + 80000" oninput="var r=0;try{r=Math.round(eval(this.value.replace(/[^0-9+\-*.() ]/g,'')))||0;}catch(e){}document.getElementById('v-monto-pesos').value=r>0?r:'';calcularConversion();">
+            </div>
               <label class="form-label">Monto en pesos ($)</label>
 <input type="text" class="form-input" id="v-monto-pesos" placeholder="Ej: 120000+45000+80000" oninput="calcularDesdeExpresion()">            </div>
             <div class="form-group">
