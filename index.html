@@ -371,14 +371,8 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
           </div>
           <div class="form-row">
             <div class="form-group">
-              <div class="form-group">
-              <label class="form-label">Calculadora (opcional)</label>
-              <input type="text" class="form-input" placeholder="Ej: 120000 + 45000 + 80000" oninput="var r=0;try{r=Math.round(eval(this.value.replace(/[^0-9+\-*.() ]/g,'')))||0;}catch(e){}document.getElementById('v-monto-pesos').value=r>0?r:'';calcularConversion();">
-              <div id="calc-preview" style="font-size:11px;color:var(--green);font-family:sans-serif;margin-top:3px;font-weight:700"></div>
-            </div>
               <label class="form-label">Monto en pesos ($)</label>
-              <input type="number" class="form-input" id="v-monto-pesos" placeholder="0" oninput="calcularConversion()">
-            </div>
+<input type="text" class="form-input" id="v-monto-pesos" placeholder="Ej: 120000+45000+80000" oninput="calcularDesdeExpresion()">            </div>
             <div class="form-group">
               <label class="form-label">Tipo de cambio ($/USD)</label>
               <input type="number" class="form-input" id="v-tc" placeholder="1500" oninput="calcularConversion()">
@@ -455,136 +449,6 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
       </div>
     
     </div>
-    <div class="page" id="page-stock">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px">
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="stockShowTab('costos',this)" id="stab-costos" style="font-weight:700;border-bottom:2px solid var(--green)">💰 Productos y costos</button>
-      <button class="btn btn-secondary btn-sm" onclick="stockShowTab('stock',this)" id="stab-stock">📦 Stock actual</button>
-      <button class="btn btn-secondary btn-sm" onclick="stockShowTab('pedido',this)" id="stab-pedido">🛒 Armar pedido</button>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary btn-sm" onclick="stockExportCSV()">💾 Exportar CSV</button>
-    </div>
-  </div>
-
-  <div class="stat-grid" id="stock-stats" style="margin-bottom:1.25rem"></div>
-
-  <!-- PESTAÑA COSTOS -->
-  <div id="stab-content-costos">
-    <div class="card" style="margin-bottom:1rem">
-      <div class="section-title">Configuración global</div>
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <div><label class="form-label">Dólar para calcular ($)</label><input type="number" class="form-input" id="stock-dolar" value="1450" style="width:100px" oninput="stockRenderCostos()"></div>
-        <div><label class="form-label">% gastos estimado (sin pedido real)</label><input type="number" class="form-input" id="stock-gastos-pct" value="60" style="width:80px" oninput="stockRenderCostos()"><span style="font-size:12px;font-family:sans-serif;margin-left:4px">%</span></div>
-      </div>
-    </div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="overflow-x:auto">
-        <table id="stock-costos-table" style="min-width:1000px">
-          <thead><tr>
-            <th style="position:sticky;left:0;background:var(--surface2);min-width:140px;z-index:1">Producto</th>
-            <th>Cat.</th>
-            <th>Costo USD<br><span style="font-weight:400;text-transform:none">proveedor</span></th>
-            <th>Flete+transf.<br><span style="font-weight:400;text-transform:none">por unidad</span></th>
-            <th>Despachante<br><span style="font-weight:400;text-transform:none">por unidad</span></th>
-            <th>Costo final<br><span style="font-weight:400;text-transform:none">USD</span></th>
-            <th>Dólar</th>
-            <th>Costo final<br><span style="font-weight:400;text-transform:none">pesos</span></th>
-            <th>Precio venta<br><span style="font-weight:400;text-transform:none">pesos</span></th>
-            <th>Mark up</th>
-            <th>Margen</th>
-            <th>Stock</th>
-            <th>Cobertura</th>
-          </tr></thead>
-          <tbody id="stock-costos-body"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- PESTAÑA STOCK -->
-  <div id="stab-content-stock" style="display:none">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
-      <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="stock-search" placeholder="Buscar producto..." oninput="stockRenderStock()"></div>
-      <select class="form-select" id="stock-filter-cat" style="max-width:180px;font-size:12px" onchange="stockRenderStock()">
-        <option value="">Todas las categorías</option>
-        <option>Brackets</option><option>Arcos</option><option>Tubos</option>
-        <option>Botones linguales</option><option>Elastómeros</option>
-        <option>Alambres</option><option>Resortes</option><option>Hooks</option>
-      </select>
-      <select class="form-select" id="stock-filter-status" style="max-width:180px;font-size:12px" onchange="stockRenderStock()">
-        <option value="">Todos los estados</option>
-        <option value="danger">Sin stock</option>
-        <option value="warn">Stock bajo (&lt;6m)</option>
-        <option value="ok">OK (≥6m)</option>
-      </select>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <div style="display:flex;align-items:center;gap:8px;background:var(--blue-light);border-radius:var(--rs);padding:6px 12px;font-size:12px;font-family:sans-serif;color:var(--blue-text)">
-          <span>📅 Fecha recuento:</span>
-          <input type="date" id="stock-fecha-recuento" style="font-size:12px;padding:3px 6px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface);color:var(--text)">
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="stockGuardarRecuento()">✅ Guardar recuento</button>
-        <button class="btn btn-secondary btn-sm" onclick="stockMostrarHistorial()">📊 Ver historial</button>
-      </div>
-    </div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="overflow-x:auto">
-        <table id="stock-table" style="min-width:800px">
-          <thead><tr>
-            <th style="position:sticky;left:0;background:var(--surface2);min-width:140px;z-index:1">Producto</th>
-            <th>Categoría</th>
-            <th>Stock actual</th>
-            <th>Prom. mensual<br><span style="font-weight:400;text-transform:none">últimos recuentos</span></th>
-            <th>Cobertura</th>
-            <th>Último recuento</th>
-            <th>Acción</th>
-          </tr></thead>
-          <tbody id="stock-body"></tbody>
-        </table>
-      </div>
-    </div>
-    <div id="stock-historial-panel" style="display:none;margin-top:1.5rem">
-      <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div class="section-title" style="margin:0;border:none;padding:0">📊 Historial de recuentos</div>
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('stock-historial-panel').style.display='none'">Cerrar</button>
-        </div>
-        <div id="stock-historial-content"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PESTAÑA PEDIDO -->
-  <div id="stab-content-pedido" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-      <div class="card">
-        <div class="section-title">Nuevo pedido</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-          <div><label class="form-label">Fecha</label><input type="date" class="form-input" id="ped-fecha"></div>
-          <div><label class="form-label">Dólar del día ($)</label><input type="number" class="form-input" id="ped-dolar" value="1450" oninput="stockRenderPedidoTotal()"></div>
-          <div><label class="form-label">Flete (USD)</label><input type="number" class="form-input" id="ped-flete" value="0" oninput="stockRenderPedidoTotal()"></div>
-          <div><label class="form-label">Transferencia (USD)</label><input type="number" class="form-input" id="ped-transfer" value="0" oninput="stockRenderPedidoTotal()"></div>
-        </div>
-        <div id="ped-items"></div>
-        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="stockAgregarItemPedido()">+ Agregar producto</button>
-        <div id="ped-resumen" style="margin-top:12px;background:var(--surface2);border-radius:var(--rs);padding:10px 12px;font-family:sans-serif;font-size:12px"></div>
-        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
-          <button class="btn btn-secondary btn-sm" onclick="stockGuardarPedido('borrador')">💾 Guardar borrador</button>
-          <button class="btn btn-primary btn-sm" onclick="stockGuardarPedido('camino')">✈️ Guardar — en camino</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="section-title">Productos sugeridos para pedir</div>
-        <p class="text-muted" style="margin-bottom:8px">Cobertura menor a 18 meses, ordenados por urgencia</p>
-        <div id="ped-sugeridos"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="section-title">Historial de pedidos al proveedor</div>
-      <div id="ped-historial"></div>
-    </div>
-  </div>
-</div>
     <div class="page" id="page-pipeline">
       <div class="alert alert-blue mb-16"><strong>Vista por estado:</strong> clientes agrupados. Click en cualquiera para abrir su ficha.</div>
       <div class="kanban-board" id="kanban-board"></div>
@@ -1544,9 +1408,26 @@ function initVentasUI() {
   renderTablaVentas();
 }
 
-function calcularConversion() {
-const raw = document.getElementById('v-monto-pesos').value;
-  const pesos = (() => { try { return Math.round(eval(raw.replace(/[^0-9+\-*.() ]/g,''))) || 0; } catch(e) { return 0; } })();  const tc = parseFloat(document.getElementById('v-tc').value) || 0;
+function calcularConversion() { function calcularDesdeExpresion() {
+  const input = document.getElementById('v-monto-pesos');
+  const expr = input.value.replace(/[^0-9+\-*/.() ]/g, '');
+  let resultado = 0;
+  try {
+    if (expr) resultado = Math.round(eval(expr)) || 0;
+  } catch(e) { resultado = 0; }
+  const tc = parseFloat(document.getElementById('v-tc').value) || 0;
+  const el = document.getElementById('v-conversion');
+  const usdEl = document.getElementById('v-usd-result');
+  if (resultado > 0 && tc > 0) {
+    usdEl.textContent = 'US$' + Math.round(resultado / tc * 100) / 100;
+    el.style.display = 'block';
+    input.title = 'Total: $' + resultado.toLocaleString('es-AR');
+  } else {
+    el.style.display = 'none';
+  }
+}
+  const pesos = parseFloat(document.getElementById('v-monto-pesos').value) || 0;
+  const tc = parseFloat(document.getElementById('v-tc').value) || 0;
   const el = document.getElementById('v-conversion');
   const usdEl = document.getElementById('v-usd-result');
   if (pesos > 0 && tc > 0) {
@@ -1565,7 +1446,9 @@ function filtrarClientesVenta() {
 function registrarVenta() {
   const clienteNombre = document.getElementById('v-cliente').value.trim();
   const fecha = document.getElementById('v-fecha').value;
-  const montoP = parseFloat(document.getElementById('v-monto-pesos').value);
+  const expr = document.getElementById('v-monto-pesos').value.replace(/[^0-9+\-*/.() ]/g,'');
+let montoP = 0;
+try { montoP = Math.round(eval(expr)) || 0; } catch(e) { montoP = 0; }
   const tc = parseFloat(document.getElementById('v-tc').value) || 1500;
   const nota = document.getElementById('v-nota').value.trim();
   const envio = document.getElementById('v-envio')?.value || '';
@@ -2381,182 +2264,6 @@ function toast(msg) {
   setTimeout(()=>el.classList.remove('show'), 2800);
 }
 
-// ============================================================
-// MÓDULO DE STOCK
-// ============================================================
-const STOCK_PRODUCTS = [
-  {id:'brk-met',cat:'Brackets',name:'Metálicos'},
-  {id:'brk-cer-co',cat:'Brackets',name:'Cerámicos Class One'},
-  {id:'brk-cer-sky',cat:'Brackets',name:'Cerámicos SkyOrtho'},
-  {id:'brk-lin',cat:'Brackets',name:'Linguales'},
-  {id:'brk-aut',cat:'Brackets',name:'Autoligables'},
-  {id:'brk-zaf',cat:'Brackets',name:'Zafiro'},
-  {id:'arc-niti-012s',cat:'Arcos',name:'Niti 0.12 sup'},
-  {id:'arc-niti-012i',cat:'Arcos',name:'Niti 0.12 inf'},
-  {id:'arc-niti-014s',cat:'Arcos',name:'Niti 0.14 sup'},
-  {id:'arc-niti-014i',cat:'Arcos',name:'Niti 0.14 inf'},
-  {id:'arc-niti-016s',cat:'Arcos',name:'Niti 0.16 sup'},
-  {id:'arc-niti-016i',cat:'Arcos',name:'Niti 0.16 inf'},
-  {id:'arc-niti-018s',cat:'Arcos',name:'Niti 0.18 sup'},
-  {id:'arc-niti-018i',cat:'Arcos',name:'Niti 0.18 inf'},
-  {id:'arc-niti-020s',cat:'Arcos',name:'Niti 0.20 sup'},
-  {id:'arc-niti-020i',cat:'Arcos',name:'Niti 0.20 inf'},
-  {id:'arc-acero-014s',cat:'Arcos',name:'Acero 0.14 sup'},
-  {id:'arc-acero-014i',cat:'Arcos',name:'Acero 0.14 inf'},
-  {id:'arc-acero-016s',cat:'Arcos',name:'Acero 0.16 sup'},
-  {id:'arc-acero-016i',cat:'Arcos',name:'Acero 0.16 inf'},
-  {id:'arc-acero-018s',cat:'Arcos',name:'Acero 0.18 sup'},
-  {id:'arc-acero-018i',cat:'Arcos',name:'Acero 0.18 inf'},
-  {id:'arc-acero-020s',cat:'Arcos',name:'Acero 0.20 sup'},
-  {id:'arc-acero-020i',cat:'Arcos',name:'Acero 0.20 inf'},
-  {id:'arc-niti-rect-1925s',cat:'Arcos',name:'Niti rect 19x25 sup'},
-  {id:'arc-niti-rect-1925i',cat:'Arcos',name:'Niti rect 19x25 inf'},
-  {id:'arc-niti-rect-1725s',cat:'Arcos',name:'Niti rect 17x25 sup'},
-  {id:'arc-niti-rect-1725i',cat:'Arcos',name:'Niti rect 17x25 inf'},
-  {id:'arc-niti-rect-1822s',cat:'Arcos',name:'Niti rect 18x22 sup'},
-  {id:'arc-niti-rect-1822i',cat:'Arcos',name:'Niti rect 18x22 inf'},
-  {id:'arc-acero-rect-1925s',cat:'Arcos',name:'Acero rect 19x25 sup'},
-  {id:'arc-acero-rect-1925i',cat:'Arcos',name:'Acero rect 19x25 inf'},
-  {id:'arc-cr-014s',cat:'Arcos',name:'Curva reversa 0.14 sup'},
-  {id:'arc-cr-014i',cat:'Arcos',name:'Curva reversa 0.14 inf'},
-  {id:'arc-cr-016s',cat:'Arcos',name:'Curva reversa 0.16 sup'},
-  {id:'arc-cr-016i',cat:'Arcos',name:'Curva reversa 0.16 inf'},
-  {id:'arc-cr-018s',cat:'Arcos',name:'Curva reversa 0.18 sup'},
-  {id:'arc-cr-018i',cat:'Arcos',name:'Curva reversa 0.18 inf'},
-  {id:'arc-est-014s',cat:'Arcos',name:'Estético 0.14 sup'},
-  {id:'arc-est-014i',cat:'Arcos',name:'Estético 0.14 inf'},
-  {id:'arc-est-016s',cat:'Arcos',name:'Estético 0.16 sup'},
-  {id:'arc-est-016i',cat:'Arcos',name:'Estético 0.16 inf'},
-  {id:'arc-est-018s',cat:'Arcos',name:'Estético 0.18 sup'},
-  {id:'arc-est-018i',cat:'Arcos',name:'Estético 0.18 inf'},
-  {id:'tub-1s',cat:'Tubos',name:'Tubo primer molar simple'},
-  {id:'tub-2s',cat:'Tubos',name:'Tubo segundo molar simple'},
-  {id:'bot-lin',cat:'Botones linguales',name:'Botones linguales'},
-  {id:'ela-gom-18l',cat:'Elastómeros',name:'Gomas 1/8 light'},
-  {id:'ela-gom-18m',cat:'Elastómeros',name:'Gomas 1/8 medium'},
-  {id:'ela-gom-18h',cat:'Elastómeros',name:'Gomas 1/8 heavy'},
-  {id:'ela-gom-316l',cat:'Elastómeros',name:'Gomas 3/16 light'},
-  {id:'ela-gom-316m',cat:'Elastómeros',name:'Gomas 3/16 medium'},
-  {id:'ela-gom-316h',cat:'Elastómeros',name:'Gomas 3/16 heavy'},
-  {id:'ela-bas-tra',cat:'Elastómeros',name:'Ligaduras transparentes'},
-  {id:'ela-bas-gri',cat:'Elastómeros',name:'Ligaduras grises'},
-  {id:'ela-bas-mul',cat:'Elastómeros',name:'Ligaduras multicolor'},
-  {id:'ela-cad-tra-con',cat:'Elastómeros',name:'Cadena transp. continua'},
-  {id:'ela-cad-tra-cor',cat:'Elastómeros',name:'Cadena transp. corta'},
-  {id:'ela-cad-tra-lar',cat:'Elastómeros',name:'Cadena transp. larga'},
-  {id:'ela-cad-gri-con',cat:'Elastómeros',name:'Cadena gris continua'},
-  {id:'ela-cad-gri-cor',cat:'Elastómeros',name:'Cadena gris corta'},
-  {id:'ela-cad-gri-lar',cat:'Elastómeros',name:'Cadena gris larga'},
-  {id:'ela-sep',cat:'Elastómeros',name:'Separadores en S'},
-  {id:'ala-lig',cat:'Alambres',name:'Ligadura metálica 0.25mm'},
-  {id:'res-010',cat:'Resortes',name:'Resortes espiras abiertas'},
-  {id:'res-012',cat:'Resortes',name:'Niti open spring 0.012'},
-  {id:'hoo-mid',cat:'Hooks',name:'Crimpable hook middle'},
-  {id:'hoo-sho',cat:'Hooks',name:'Crimpable hook short'},
-];
-
-let stockData = {};
-let stockHistorial = [];
-let stockPedidos = [];
-
-function stockLoadData() {
-  try {
-    const sd = localStorage.getItem('gvd_stock_data');
-    const sh = localStorage.getItem('gvd_stock_historial');
-    const sp = localStorage.getItem('gvd_stock_pedidos');
-    if (sd) stockData = JSON.parse(sd);
-    if (sh) stockHistorial = JSON.parse(sh);
-    if (sp) stockPedidos = JSON.parse(sp);
-    const fechaEl = document.getElementById('stock-fecha-recuento');
-    if (fechaEl && !fechaEl.value) fechaEl.value = new Date().toISOString().slice(0,10);
-    const pedFecha = document.getElementById('ped-fecha');
-    if (pedFecha && !pedFecha.value) pedFecha.value = new Date().toISOString().slice(0,10);
-  } catch(e) {}
-}
-
-function stockSaveData() {
-  localStorage.setItem('gvd_stock_data', JSON.stringify(stockData));
-  localStorage.setItem('gvd_stock_historial', JSON.stringify(stockHistorial));
-  localStorage.setItem('gvd_stock_pedidos', JSON.stringify(stockPedidos));
-}
-
-function stockShowTab(tab, btn) {
-  ['costos','stock','pedido'].forEach(t => {
-    document.getElementById('stab-content-'+t).style.display = t===tab ? 'block' : 'none';
-    const b = document.getElementById('stab-'+t);
-    if (b) { b.style.fontWeight = t===tab ? '700' : ''; b.style.borderBottom = t===tab ? '2px solid var(--green)' : ''; }
-  });
-  if (tab==='costos') stockRenderCostos();
-  if (tab==='stock') stockRenderStock();
-  if (tab==='pedido') { stockRenderPedidoSugeridos(); stockRenderPedidoHistorial(); stockRenderPedidoItems(); }
-}
-
-function stockGetDolar() { return parseFloat(document.getElementById('stock-dolar')?.value) || 1450; }
-function stockGetGastosPct() { return parseFloat(document.getElementById('stock-gastos-pct')?.value) || 60; }
-
-function stockGetCostoFinal(pid) {
-  const d = stockData[pid] || {};
-  if (d.costoFinalUSD) return d.costoFinalUSD;
-  const costoBase = d.costoUSD || 0;
-  if (!costoBase) return 0;
-  return costoBase * (1 + stockGetGastosPct()/100);
-}
-
-function stockGetVentasPromedio(pid) {
-  if (stockHistorial.length < 2) return null;
-  const sorted = [...stockHistorial].sort((a,b) => a.fecha > b.fecha ? 1 : -1);
-  let totalConsumo = 0, totalMeses = 0;
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = sorted[i-1], curr = sorted[i];
-    const qPrev = prev.snapshot?.[pid]?.qty;
-    const qCurr = curr.snapshot?.[pid]?.qty;
-    if (qPrev === undefined || qCurr === undefined || qPrev === '' || qCurr === '') continue;
-    const pedidosEnPeriodo = stockPedidos
-      .filter(p => p.estado === 'completado' && p.fecha >= prev.fecha && p.fecha <= curr.fecha)
-      .reduce((s,p) => s + (p.items?.find(x=>x.id===pid)?.qty || 0), 0);
-    const consumo = (parseFloat(qPrev)||0) + pedidosEnPeriodo - (parseFloat(qCurr)||0);
-    if (consumo < 0) continue;
-    const d1 = new Date(prev.fecha), d2 = new Date(curr.fecha);
-    const meses = (d2-d1) / (1000*60*60*24*30.44);
-    if (meses < 0.5) continue;
-    totalConsumo += consumo;
-    totalMeses += meses;
-  }
-  if (totalMeses === 0) return null;
-  return Math.round(totalConsumo / totalMeses * 10) / 10;
-}
-
-function stockGetCobertura(pid) {
-  const d = stockData[pid] || {};
-  const qty = parseFloat(d.qty) || 0;
-  const avg = stockGetVentasPromedio(pid);
-  if (!avg || avg === 0) return null;
-  return Math.round(qty / avg * 10) / 10;
-}
-
-function stockGetStatus(pid) {
-  const cob = stockGetCobertura(pid);
-  const d = stockData[pid] || {};
-  const qty = parseFloat(d.qty);
-  if (qty === 0) return 'danger';
-  if (cob === null) return 'neutral';
-  if (cob < 6) return 'warn';
-  return 'ok';
-}
-
-function stockRenderStats() {
-  let sinStock=0, bajo=0, ok=0;
-  STOCK_PRODUCTS.forEach(p => {
-    const s = stockGetStatus(p.id);
-    if (s==='danger') sinStock++;
-    else if (s==='warn') bajo++;
-    else if (s==='ok') ok++;
-  });
-  const el = document.getElementById('stock-stats');
-  if (el) el.innerHTML = `
-    <div class="stat-card"><div class="stat-label">Productos</div><div class="stat-value">${STOCK_PRODUCTS.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Sin stock</div><div class="stat-value" style="color:var(--red)">${sinStock}</div></div>
-    <div class="stat-card"><div class="stat-label">Stock bajo (&lt;6m)</div><div class="stat-value" style="color:var(--amber)">${bajo}</div>
 document.addEventListener('DOMContentLoaded', init);
 
 document.addEventListener('DOMContentLoaded', function() {
