@@ -1009,8 +1009,10 @@ async function doCloudSave() {
       clientes, prospectos,
       ventas: ventasMensuales,
       rates: monthlyRates,
-      ventasReg: ventasRegistradas
-    });
+ventasReg: ventasRegistradas,
+        stockData: stockData,
+        stockHistorial: stockHistorial,
+        stockPedidos: stockPedidos    });
     pendingChanges = false;
     lastSaveTime = new Date().toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' });
     setSyncStatus('ok');
