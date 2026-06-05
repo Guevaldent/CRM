@@ -982,6 +982,9 @@ async function loadFromCloud() {
     // Apply migration after cloud load
     applyMigrationData();
     renderAll();
+    if (data.stockData) { stockData = data.stockData; localStorage.setItem('gvd_stock_data', JSON.stringify(stockData)); }
+        if (data.stockHistorial) { stockHistorial = data.stockHistorial; localStorage.setItem('gvd_stock_historial', JSON.stringify(stockHistorial)); }
+        if (data.stockPedidos) { stockPedidos = data.stockPedidos; localStorage.setItem('gvd_stock_pedidos', JSON.stringify(stockPedidos)); }
     toast('✅ Datos cargados desde Google Sheets');
     return true;
   } catch(err) {
