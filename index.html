@@ -1010,7 +1010,8 @@ async function doCloudSave() {
       ventas: ventasMensuales,
       rates: monthlyRates,
 ventasReg: ventasRegistradas,
-        stockData: stockData,
+stockData: stockData,
+stockProducts: STOCK_PRODUCTS.map(p => ({id: p.id, name: p.name, cat: p.cat})),
         stockHistorial: stockHistorial,
         stockPedidos: stockPedidos    });
     pendingChanges = false;
