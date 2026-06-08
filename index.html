@@ -585,7 +585,129 @@ tbody td { padding: 9px 12px; vertical-align: middle; }
     </div>
   </div>
 </div>
-    <div class="page" id="page-pipeline">
+<div class="page" id="page-stock">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="stockShowTab('costos',this)" id="stab-costos" style="font-weight:700;border-bottom:2px solid var(--green)">💰 Productos y costos</button>
+      <button class="btn btn-secondary btn-sm" onclick="stockShowTab('stock',this)" id="stab-stock">📦 Stock actual</button>
+      <button class="btn btn-secondary btn-sm" onclick="stockShowTab('pedido',this)" id="stab-pedido">🛒 Armar pedido</button>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="stockExportCSV()">💾 Exportar CSV</button>
+  </div>
+  <div class="stat-grid" id="stock-stats" style="margin-bottom:1.25rem"></div>
+  <div id="stab-content-costos">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="section-title">Configuración global</div>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div><label class="form-label">Dólar para calcular ($)</label><input type="number" class="form-input" id="stock-dolar" value="1450" style="width:100px" oninput="stockRenderCostos()"></div>
+        <div><label class="form-label">% gastos estimado</label><input type="number" class="form-input" id="stock-gastos-pct" value="60" style="width:80px" oninput="stockRenderCostos()"><span style="font-size:12px;font-family:sans-serif;margin-left:4px">%</span></div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table id="stock-costos-table" style="min-width:1000px;width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px">
+          <thead><tr style="background:var(--surface2)">
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;position:sticky;left:0;background:var(--surface2);min-width:140px;z-index:1">Producto</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Cat.</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Costo USD proveedor</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Flete+transf./u</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Despachante/u</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Costo final USD</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Dólar</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Costo final $</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Precio venta $</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Mark up</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Margen</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Stock</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Cobertura</th>
+          </tr></thead>
+          <tbody id="stock-costos-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="stab-content-stock" style="display:none">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+      <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="stock-search" placeholder="Buscar producto..." oninput="stockRenderStock()"></div>
+      <select class="form-select" id="stock-filter-cat" style="max-width:180px;font-size:12px" onchange="stockRenderStock()">
+        <option value="">Todas las categorías</option>
+        <option>Brackets</option><option>Tubos</option><option>Botones linguales</option>
+        <option>Arcos Niti</option><option>Arcos Niti Rect</option>
+        <option>Arcos Acero</option><option>Arcos Acero Rect</option>
+        <option>Arcos Termoactivado</option><option>Arcos Curva Reversa</option><option>Arcos Estético</option>
+        <option>Elastómeros</option><option>Alambres</option><option>Resortes</option><option>Hooks</option>
+      </select>
+      <select class="form-select" id="stock-filter-status" style="max-width:180px;font-size:12px" onchange="stockRenderStock()">
+        <option value="">Todos los estados</option>
+        <option value="danger">Sin stock</option>
+        <option value="warn">Stock bajo</option>
+        <option value="ok">OK</option>
+      </select>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--blue-light);border-radius:var(--rs);padding:6px 12px;font-size:12px;font-family:sans-serif;color:var(--blue-text)">
+          <span>📅</span><input type="date" id="stock-fecha-recuento" style="font-size:12px;padding:3px 6px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface);color:var(--text)">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="stockGuardarRecuento()">✅ Guardar recuento</button>
+        <button class="btn btn-secondary btn-sm" onclick="stockMostrarHistorial()">📊 Ver historial</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="min-width:800px;width:100%;border-collapse:collapse;font-family:sans-serif;font-size:12px">
+          <thead><tr style="background:var(--surface2)">
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;position:sticky;left:0;background:var(--surface2);min-width:140px;z-index:1">Producto</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Categoría</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Stock actual</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Venta prom./mes</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Cobertura</th>
+            <th style="padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;white-space:nowrap">Último recuento</th>
+            <th style="padding:8px 10px;width:40px"></th>
+          </tr></thead>
+          <tbody id="stock-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="stock-historial-panel" style="display:none;margin-top:1.5rem">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="section-title" style="margin:0;border:none;padding:0">📊 Historial de recuentos</div>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('stock-historial-panel').style.display='none'">Cerrar</button>
+        </div>
+        <div id="stock-historial-content"></div>
+      </div>
+    </div>
+  </div>
+  <div id="stab-content-pedido" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="card">
+        <div class="section-title">Nuevo pedido</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div><label class="form-label">Fecha</label><input type="date" class="form-input" id="ped-fecha"></div>
+          <div><label class="form-label">Dólar del día ($)</label><input type="number" class="form-input" id="ped-dolar" value="1450" oninput="stockRenderPedidoTotal()"></div>
+          <div><label class="form-label">Flete (USD)</label><input type="number" class="form-input" id="ped-flete" value="0" oninput="stockRenderPedidoTotal()"></div>
+          <div><label class="form-label">Transferencia (USD)</label><input type="number" class="form-input" id="ped-transfer" value="0" oninput="stockRenderPedidoTotal()"></div>
+        </div>
+        <div id="ped-items"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="stockAgregarItemPedido()">+ Agregar producto</button>
+        <div id="ped-resumen" style="margin-top:12px;background:var(--surface2);border-radius:var(--rs);padding:10px 12px;font-family:sans-serif;font-size:12px"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="stockGuardarPedido('borrador')">💾 Borrador</button>
+          <button class="btn btn-primary btn-sm" onclick="stockGuardarPedido('camino')">✈️ En camino</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Sugeridos para pedir</div>
+        <p class="text-muted" style="margin-bottom:8px">Cobertura menor a 18 meses</p>
+        <div id="ped-sugeridos"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-title">Historial de pedidos</div>
+      <div id="ped-historial"></div>
+    </div>
+  </div>
+</div>   
+<div class="page" id="page-pipeline">
       <div class="alert alert-blue mb-16"><strong>Vista por estado:</strong> clientes agrupados. Click en cualquiera para abrir su ficha.</div>
       <div class="kanban-board" id="kanban-board"></div>
     </div>
