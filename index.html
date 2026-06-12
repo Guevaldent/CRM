@@ -1106,7 +1106,7 @@ async function loadFromCloud() {
     renderAll();
 if (data.stockData && Object.keys(data.stockData).length > Object.keys(stockData).length) { stockData = data.stockData; localStorage.setItem('gvd_stock_data', JSON.stringify(stockData)); }
 if (data.stockHistorial && data.stockHistorial.length > stockHistorial.length) { stockHistorial = data.stockHistorial; localStorage.setItem('gvd_stock_historial', JSON.stringify(stockHistorial)); }
-if (data.stockPedidos && data.stockPedidos.length > stockPedidos.length) { stockPedidos = data.stockPedidos; localStorage.setItem('gvd_stock_pedidos', JSON.stringify(stockPedidos)); }        if (data.stockHistorial && data.stockHistorial.length > 0 && data.stockHistorial[0].fecha && data.stockHistorial[0].fecha.match(/^\d{4}-\d{2}-\d{2}$/)) { stockHistorial = data.stockHistorial; localStorage.setItem('gvd_stock_historial', JSON.stringify(stockHistorial)); }
+if (data.stockPedidos && data.stockPedidos.length > stockPedidos.length) { stockPedidos = data.stockPedidos; localStorage.setItem('gvd_stock_pedidos', JSON.stringify(stockPedidos)); }        
         if (data.stockPedidos) { stockPedidos = data.stockPedidos; localStorage.setItem('gvd_stock_pedidos', JSON.stringify(stockPedidos)); }
     toast('✅ Datos cargados desde Google Sheets');
     return true;
