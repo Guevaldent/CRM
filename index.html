@@ -2399,7 +2399,7 @@ document.addEventListener('click', e=>{ if(e.target.classList.contains('modal-ov
 // BACKUP
 // ============================================================
 function exportBackup() {
-  const data = JSON.stringify({clientes,prospectos,ventasMensuales,monthlyRates},null,2);
+  const data = JSON.stringify({clientes,prospectos,ventasMensuales,monthlyRates,ventasRegistradas,stockData,stockHistorial,stockPedidos},null,2);
   const blob = new Blob([data],{type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'guevaldent_backup_'+today()+'.json'; a.click();
