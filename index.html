@@ -1998,7 +1998,7 @@ function openFicha(id) {
 }
 
 function renderFichaCompras(c) {
-  const compras = c.compras||[];
+  const compras = ventasRegistradas.filter(v=>v.cliente===c.nombre).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   if (!compras.length) {
     document.getElementById('fc-compras-summary').innerHTML='<p class="text-muted">No hay compras registradas en el sistema para este cliente.</p>';
     document.getElementById('fc-compras-chart').innerHTML='';
