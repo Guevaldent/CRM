@@ -1998,7 +1998,7 @@ function openFicha(id) {
 }
 
 function renderFichaCompras(c) {
-  const compras = ventasRegistradas.filter(v=>v.cliente===c.nombre).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const compras = ventasRegistradas.filter(v=>v.cliente===c.nombre).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));const hace24m=new Date();hace24m.setMonth(hace24m.getMonth()-24);const tieneRecientes=compras.some(x=>new Date(x.fecha)>=hace24m);const comprasCalc=tieneRecientes?compras.filter(x=>new Date(x.fecha)>=hace24m):compras;
   if (!compras.length) {
     document.getElementById('fc-compras-summary').innerHTML='<p class="text-muted">No hay compras registradas en el sistema para este cliente.</p>';
     document.getElementById('fc-compras-chart').innerHTML='';
@@ -2006,12 +2006,12 @@ function renderFichaCompras(c) {
     return;
   }
 
-  const totalUSD = compras.reduce((s,x)=>s+x.montoUSD,0);
-  const avgUSD = totalUSD/compras.length;
-  const maxUSD = Math.max(...compras.map(x=>x.montoUSD));
+  const totalUSD = comprasCalc.reduce((s,x)=>s+x.montoUSD,0);
+  const avgUSD = totalUSD/comprasCalc.length;
+  const maxUSD = Math.max(...comprasCalc.map(x=>x.montoUSD));
 
   // Detect buying pattern
-  const dates = compras.map(x=>new Date(x.fecha)).sort((a,b)=>a-b);
+  const dates = comprasCalc.map(x=>new Date(x.fecha)).sort((a,b)=>a-b);
   let avgDias = null;
   if (dates.length >= 2) {
     let total = 0; for (let i=1;i<dates.length;i++) total+=(dates[i]-dates[i-1])/(1000*60*60*24);
