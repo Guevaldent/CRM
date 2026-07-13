@@ -1423,14 +1423,8 @@ function renderClientes() {
   document.getElementById('tbody-clientes').innerHTML = list.map(c => {
     const wa = c.whatsapp||'';
     const telFijo = c.telefono && c.telefono !== c.whatsapp ? c.telefono : '';
-    // Format ticket: extract number and show as US$XX
-    let ticketStr = '—';
-    if (c.ticketPromedio) {
-      const nums = c.ticketPromedio.toString().match(/\d+/g);
-      if (nums && nums.length === 1) ticketStr = 'US$'+nums[0];
-      else if (nums && nums.length >= 2) ticketStr = 'US$'+nums[0]+'-US$'+nums[nums.length-1];
-      else ticketStr = c.ticketPromedio;
-    }
+    // Format ticket: calculate dynamically from ventasRegistradas
+    const _h24=new Date();_h24.setMonth(_h24.getMonth()-24);const _vt=ventasRegistradas.filter(v=>v.cliente===c.nombre);const _tr=_vt.some(x=>new Date(x.fecha)>=_h24);const _cc=_tr?_vt.filter(x=>new Date(x.fecha)>=_h24):_vt;const ticketStr=_cc.length?'US$'+Math.round(_cc.reduce((s,x)=>s+x.montoUSD,0)/_cc.length).toLocaleString('es-AR'):'—';
     const _tRaw = parseFloat(String(c.totalUSD||c.montoTotal||0).replace(/[^0-9.]/g,''))||0;
       const totalStr = _tRaw > 0 ? 'US$'+Math.round(_tRaw).toLocaleString('es-AR') : '—';
     return `<tr onclick="openFicha(${c.id})">
