@@ -1231,11 +1231,8 @@ function fmtDateDMY(s) {
   if (s === 'AHORA') return '<span style="color:var(--orange);font-weight:700">🔥 HOY</span>';
   if (s === 'No contactar') return '<span style="color:var(--red)">No contactar</span>';
   if (s === 'Baja prioridad') return '<span style="color:var(--text3)">Baja prioridad</span>';
-  const d = parseDate(s); if (!d) return s;
-  const day = String(d.getDate()).padStart(2,'0');
-  const month = String(d.getMonth()+1).padStart(2,'0');
-  const year = d.getFullYear();
-  return day+'-'+month+'-'+year;
+  const parts = s.split('-'); if (parts.length !== 3) { const d = parseDate(s); if (!d) return s; return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear(); }
+  return parts[2]+'-'+parts[1]+'-'+parts[0];
 }
 
 function fmtMes(s) {
