@@ -1435,7 +1435,7 @@ function renderClientes() {
         ${c.barrio?`<div class="text-muted">${c.barrio}</div>`:''}
       </td>
       <td>${estadoBadge(calcEstadoCliente(c))}</td>
-      <td style="font-family:sans-serif;font-size:12px">${fmtDateDMY(c.ultimaCompra)}</td>
+      <td style="font-family:sans-serif;font-size:12px">${(()=>{const v=ventasRegistradas.filter(x=>x.cliente===c.nombre);if(!v.length)return'—';return fmtDateDMY(v.map(x=>x.fecha).sort((a,b)=>b.localeCompare(a))[0]);})()}</td>
       <td style="font-family:sans-serif;font-size:12px;color:var(--text2)">${calcFrecuenciaCliente(c)}</td>
       <td style="font-family:sans-serif;font-weight:700;color:var(--green);text-align:right">${ticketStr}</td>
       <td style="font-family:sans-serif;font-weight:600;color:var(--green);text-align:right">${totalStr}</td>
@@ -1953,7 +1953,7 @@ function openFicha(id) {
   const c = clienteActivo;
   document.getElementById('fc-nombre').textContent = c.nombre;
   document.getElementById('fc-avatar').textContent = ini(c.nombre);
-  document.getElementById('fc-badges').innerHTML = estadoBadge(c.estado)+(c.barrio?`<span class="text-muted">${c.barrio}</span>`:'');
+  document.getElementById('fc-badges').innerHTML = estadoBadge(calcEstadoCliente(c))+(c.barrio?`<span class="text-muted">${c.barrio}</span>`:'');
 
   document.getElementById('fc-info-grid').innerHTML = `
     <div>
