@@ -2362,9 +2362,9 @@ function agendarCalendarId(id) {
 function agendarCalendarProspActivo() {
   if (!prospectoActivo) return;
   const p = prospectoActivo;
-  const d = parseDate(p.proximoSeguimiento)||new Date(); d.setHours(10,0,0,0);
+  const parts = (p.proximoSeguimiento||'').split('-'); const d = parts.length===3 ? new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]),10,0,0) : new Date(); d.setHours(10,0,0,0);
   const end = new Date(d); end.setMinutes(30);
-  const fmt = dt => dt.toISOString().replace(/[-:]/g,'').replace('.000Z','Z');
+  const fmt = dt => [String(dt.getFullYear()),String(dt.getMonth()+1).padStart(2,'0'),String(dt.getDate()).padStart(2,'0')].join('')+'T'+[String(dt.getHours()).padStart(2,'0'),String(dt.getMinutes()).padStart(2,'0'),'00'].join('')+'Z';
   window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent('Contactar prospecto: '+p.nombre)}&dates=${fmt(d)}/${fmt(end)}&details=${encodeURIComponent('Clínica: '+p.nombre+'\nWA: '+(p.whatsapp||'?'))}`, '_blank');
 }
 
