@@ -1155,6 +1155,7 @@ function init() {
 
   const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
   document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('es-AR', opts);
+stockLoadData();
   renderAll();
 }
 
@@ -1272,12 +1273,10 @@ function showPage(id, btn) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   btn?.classList.add('active');
-  if (id === 'stock') { setTimeout(function() { stockLoadData(); stockRenderCostos(); stockRenderStats(); }, 100); }
+  if (id === 'stock') { setTimeout(function() { stockRenderCostos(); stockRenderStats(); }, 100); }
   if (id === 'clientes') { setTimeout(function() { recalcularClientes(); renderClientes(); }, 100); }
   const titles = {dashboard:'Dashboard',hoy:'Tareas del día',semana:'Esta semana',clientes:'Clientes',reactivar:'Reactivar clientes',prospectos:'Clínicas / Nuevos',ventas:'Ventas mensuales',estado:'Estado clientes',stock:'Control de stock'};  document.getElementById('btn-nuevo').style.display = id === 'prospectos' ? 'none' : '';
-  if (id === 'stock') { setTimeout(function() { stockLoadData(); stockRenderCostos(); stockRenderStats(); }, 100); }
 }
-
 // ============================================================
 // DASHBOARD
 // ============================================================
