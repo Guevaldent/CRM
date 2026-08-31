@@ -1049,13 +1049,13 @@ stockProducts: STOCK_PRODUCTS.map(p => ({id: p.id, name: p.name, cat: p.cat})),
 
 function setSyncStatus(s) { syncStatus = s; updateSyncIndicator(); }
 
-function saveWithCloud() {
+function saveWithCloud(skipCloudSync) {
   localStorage.setItem('gvd3_clientes', JSON.stringify(clientes));
   localStorage.setItem('gvd3_ventas_reg', JSON.stringify(ventasRegistradas));
   localStorage.setItem('gvd3_prospectos', JSON.stringify(prospectos));
   localStorage.setItem('gvd3_ventas', JSON.stringify(ventasMensuales));
   localStorage.setItem('gvd3_rates', JSON.stringify(monthlyRates));
-  if (cloudSyncEnabled) scheduleSave();
+  if (cloudSyncEnabled && !skipCloudSync) scheduleSave();
 }
 
 function openModalConfig() {
@@ -1691,7 +1691,7 @@ try { montoP = Math.round(eval(expr)) || 0; } catch(e) { montoP = 0; }
     }
   }
 
-  save();
+ save(true);
   guardarVentaEnNube(nuevaVenta);
   renderAll();
   renderVentas();
