@@ -1894,8 +1894,9 @@ function editarVenta(id) {
   if (document.getElementById('v-pago')) document.getElementById('v-pago').value = v.formaPago||'Transferencia';
   if (document.getElementById('v-cobrado')) document.getElementById('v-cobrado').value = v.cobrado||'OK';
   calcularConversion();
-  // Remove old entry first
+  // Remove old entry first (local y nube)
   eliminarVentaSilent(id);
+  eliminarVentaEnNube(id);
   // Scroll to form
   document.getElementById('v-cliente').scrollIntoView({behavior:'smooth'});
   toast('Editá los datos y guardá de nuevo');
