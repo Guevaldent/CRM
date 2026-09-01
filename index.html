@@ -1876,7 +1876,7 @@ function eliminarVenta(id) {
     ventasMensuales[mesKey].totalPesos = Math.round(ventasMensuales[mesKey].totalPesos - v.montoPesos);
   }
   ventasRegistradas = ventasRegistradas.filter(x => x.id !== id);
-  save(); renderVentas(); renderDashboard();
+  save(true); eliminarVentaEnNube(id); renderVentas(); renderDashboard();
   toast('Venta eliminada');
 }
 
