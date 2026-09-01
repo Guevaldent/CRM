@@ -1463,6 +1463,7 @@ function renderClientes() {
   let list = [...clientes];
   if (filtros.estado) list = list.filter(c => calcEstadoCliente(c)===filtros.estado);
   if (q) list = list.filter(c => c.nombre.toLowerCase().includes(q)||(c.telefono||'').includes(q)||(c.barrio||'').toLowerCase().includes(q)||(c.mail||'').toLowerCase().includes(q));
+  list.sort((a,b) => a.nombre.localeCompare(b.nombre, 'es'));
 
   document.getElementById('tbody-clientes').innerHTML = list.map(c => {
     const wa = c.whatsapp||'';
