@@ -1643,10 +1643,10 @@ try { montoP = Math.round(eval(expr)) || 0; } catch(e) { montoP = 0; }
   const montoUSD = Math.round((montoP / tc) * 100) / 100;
   const mesKey = fecha.slice(0,7) + '-01';
 
-  // Add to ventasRegistradas array
+  // Add or update ventasRegistradas array
   if (!ventasRegistradas) ventasRegistradas = [];
   const nuevaVenta = {
-    id: Date.now(),
+    id: ventaEditandoId || Date.now(),
     cliente: clienteNombre,
     fecha,
     montoPesos: Math.round(montoP),
@@ -1658,7 +1658,14 @@ try { montoP = Math.round(eval(expr)) || 0; } catch(e) { montoP = 0; }
     tipoCambio: tc,
     nota
   };
-  ventasRegistradas.push(nuevaVenta);
+  if (ventaEditandoId) {
+    const idx = ventasRegistradas.findIndex(v => v.id === ventaEditandoId);
+    if (idx > -1) ventasRegistradas[idx] = nuevaVenta;
+    else ventasRegistradas.push(nuevaVenta);
+    ventaEditandoId = null;
+  } else {
+    ventasRegistradas.push(nuevaVenta);
+  }
 
   // Update monthly totals
   if (!ventasMensuales[mesKey]) {
@@ -1918,9 +1925,8 @@ function editarVenta(id) {
   if (document.getElementById('v-pago')) document.getElementById('v-pago').value = v.formaPago||'Transferencia';
   if (document.getElementById('v-cobrado')) document.getElementById('v-cobrado').value = v.cobrado||'OK';
   calcularConversion();
-  // Remove old entry first (local y nube)
-  eliminarVentaSilent(id);
-  eliminarVentaEnNube(id);
+  // Marcar que estamos editando esta venta — NO se borra hasta guardar
+  ventaEditandoId = id;
   // Scroll to form
   document.getElementById('v-cliente').scrollIntoView({behavior:'smooth'});
   toast('Editá los datos y guardá de nuevo');
@@ -2495,6 +2501,7 @@ function stockPedidoUpdateItem(i,field,val){if(field==='qty'||field==='costoUnit
 function stockPedidoRemoveItem(i){pedidoItems.splice(i,1);stockRenderPedidoItems();}
 function stockRenderPedidoTotal(){const el=document.getElementById('ped-resumen');if(!el)return;const flete=parseFloat(document.getElementById('ped-flete')?.value)||0,transfer=parseFloat(document.getElementById('ped-transfer')?.value)||0,dolar=parseFloat(document.getElementById('ped-dolar')?.value)||1450;const sub=pedidoItems.reduce((s,i)=>s+(i.costoUnit||0)*(i.qty||0),0);const gastos=flete+transfer;const total=sub+gastos;el.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Subtotal proveedor</span><strong>US$${sub.toFixed(2)}</strong></div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--text2)">Flete + transferencia</span><strong>US$${gastos.toFixed(2)}</strong></div><div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;margin-top:6px"><span style="font-weight:700">Total estimado</span><strong style="color:var(--green)">US$${total.toFixed(2)} · $${Math.round(total*dolar).toLocaleString('es-AR')}</strong></div>`;}
 let pedidoEditandoId=null;
+let ventaEditandoId = null;
 function stockEditarPedido(id){const p=stockPedidos.find(x=>x.id===id);if(!p)return;pedidoEditandoId=id;document.getElementById('ped-fecha').value=p.fecha;document.getElementById('ped-flete').value=p.flete||0;document.getElementById('ped-transfer').value=p.transfer||0;document.getElementById('ped-dolar').value=p.dolar||1450;pedidoItems=(p.items||[]).map(i=>({...i}));stockRenderPedidoItems();toast('✏️ Editando pedido del '+p.fecha+' — modificá y guardá de nuevo');window.scrollTo({top:document.getElementById('ped-fecha').getBoundingClientRect().top+window.scrollY-100,behavior:'smooth'});}
 function stockGuardarPedido(estado){const fecha=document.getElementById('ped-fecha')?.value;if(!fecha){toast('Ingresá la fecha del pedido');return;}if(!pedidoItems.length){toast('Agregá al menos un producto');return;}const flete=parseFloat(document.getElementById('ped-flete')?.value)||0,transfer=parseFloat(document.getElementById('ped-transfer')?.value)||0,dolar=parseFloat(document.getElementById('ped-dolar')?.value)||1450;const sub=pedidoItems.reduce((s,i)=>s+(i.costoUnit||0)*(i.qty||0),0);let pedidoGuardado;if(pedidoEditandoId){const idx=stockPedidos.findIndex(p=>p.id===pedidoEditandoId);if(idx!==-1){const desp=stockPedidos[idx].despachante||0;const pedido={id:pedidoEditandoId,fecha,estado:desp>0?'completado':estado,flete,transfer,despachante:desp,dolar,subtotalProv:sub,items:pedidoItems.map(i=>({...i}))};stockActualizarCostosConPedido(pedido);stockPedidos[idx]=pedido;pedidoGuardado=pedido;}pedidoEditandoId=null;}else{const pedido={id:Date.now(),fecha,estado,flete,transfer,despachante:0,dolar,subtotalProv:sub,items:pedidoItems.map(i=>({...i}))};stockActualizarCostosConPedido(pedido);stockPedidos.push(pedido);pedidoGuardado=pedido;}localStorage.setItem('gvd_stock_data',JSON.stringify(stockData));localStorage.setItem('gvd_stock_historial',JSON.stringify(stockHistorial));localStorage.setItem('gvd_stock_pedidos',JSON.stringify(stockPedidos));if(pedidoGuardado)guardarPedidoEnNube(pedidoGuardado);pedidoItems=[];stockRenderPedidoItems();stockRenderPedidoHistorial();stockRenderPedidoSugeridos();stockRenderStats();toast(estado==='borrador'?'💾 Borrador guardado':'✈️ Pedido guardado');}
 function stockActualizarCostosConPedido(pedido){const gastos=(pedido.flete||0)+(pedido.transfer||0)+(pedido.despachante||0);const sub=pedido.items.reduce((s,i)=>s+(i.costoUnit||0)*(i.qty||0),0);pedido.items.forEach(item=>{if(!stockData[item.id])stockData[item.id]={};const s=(item.costoUnit||0)*(item.qty||0);const pct=sub>0?s/sub:0;const gu=item.qty>0?gastos*pct/item.qty:0;const cf=(item.costoUnit||0)+gu;const prevMax=stockData[item.id].costoUSDMax||0;if((item.costoUnit||0)>prevMax)stockData[item.id].costoUSDMax=item.costoUnit;if(pedido.despachante>0){const prevCFMax=stockData[item.id].costoFinalMax||0;if(cf>prevCFMax||!stockData[item.id].costoFinalUSD){stockData[item.id].costoFinalMax=Math.round(cf*100)/100;stockData[item.id].costoUSD=item.costoUnit;stockData[item.id].fleteUnit=Math.round(gu*100)/100;stockData[item.id].despUnit=Math.round(gastos*pct/(item.qty||1)*100)/100;stockData[item.id].costoFinalUSD=Math.round(cf*100)/100;stockData[item.id].costoFinalOrigen='pedido_'+pedido.fecha;}}else if(!stockData[item.id].costoUSD){stockData[item.id].costoUSD=item.costoUnit;stockData[item.id].fleteUnit=Math.round(gu*100)/100;stockData[item.id].costoFinalOrigen='pedido_'+pedido.fecha;}});}
