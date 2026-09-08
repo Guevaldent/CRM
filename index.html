@@ -1691,7 +1691,7 @@ try { montoP = Math.round(eval(expr)) || 0; } catch(e) { montoP = 0; }
     }
   } else {
     // Cliente no encontrado — buscar en prospectos y convertir automáticamente
-    const prospIdx = prospectos.findIndex(p => p.nombre.toLowerCase() === clienteNombre.toLowerCase());
+    const prospIdx = prospectos.findIndex(p => String(p.nombre||'').toLowerCase() === clienteNombre.toLowerCase());
     if (prospIdx > -1) {
       const p = prospectos[prospIdx];
       const nid = Math.max(...clientes.map(c=>c.id), 0) + 1;
