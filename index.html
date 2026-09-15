@@ -2008,6 +2008,11 @@ function openFicha(id) {
   document.getElementById('fc-avatar').textContent = ini(c.nombre);
   document.getElementById('fc-badges').innerHTML = estadoBadge(calcEstadoCliente(c))+(c.barrio?`<span class="text-muted">${c.barrio}</span>`:'');
 
+  document.getElementById('add-contacto-form').style.display = 'none';
+  document.getElementById('ct-fecha').value = '';
+  document.getElementById('ct-tipo').value = 'Contacto realizado';
+  document.getElementById('ct-nota').value = '';
+  document.getElementById('ct-proximo').value = '';
   document.getElementById('fc-info-grid').innerHTML = `
     <div>
       <div class="section-title">Contacto</div>
@@ -2162,6 +2167,7 @@ function openFichaProspecto(id) {
   document.getElementById('fp-badge').innerHTML = prospBadge(p.estado);
   document.getElementById('fp-estado-sel').value = p.estado;
 
+  document.getElementById('add-prosp-form').style.display = 'none'; document.getElementById('pc-fecha').value = ''; document.getElementById('pc-tipo').value = 'Llamada'; document.getElementById('pc-nota').value = ''; document.getElementById('pc-proximo').value = '';
   document.getElementById('fp-info-grid').innerHTML = `
     <div class="detail-row"><span class="dl">WhatsApp</span><span class="dv">${p.whatsapp||'—'}</span></div>
     <div class="detail-row"><span class="dl">Tel. fijo</span><span class="dv">${p.telefonoFijo||'—'}</span></div>
