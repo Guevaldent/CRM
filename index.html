@@ -2110,7 +2110,7 @@ function renderFichaCompras(c) {
     </div>`).join('');
 }
 
-function renderFichaHistorial(c) {
+function renderFichaHistorialVIEJA(c) {
   const h = (c.historial||[]).slice().sort((a,b)=>b.fecha>a.fecha?1:-1);
   document.getElementById('fc-historial-list').innerHTML = h.length
     ? h.map(x=>`<div class="timeline-item"><div class="tl-date">${fmtDate(x.fecha)} · <span class="tl-type">${x.tipo}</span></div><div class="tl-desc">${x.nota||''}</div>${x.proximo?`<div style="font-size:10px;color:var(--blue);font-family:sans-serif;margin-top:2px">📅 Próx: ${fmtDate(x.proximo)}</div>`:''}</div>`).join('')
@@ -2357,13 +2357,13 @@ function guardarProspecto() {
 // ============================================================
 // SEGUIMIENTO / HISTORIAL
 // ============================================================
-function showAddContacto() {
+function showAddContactoVIEJA() {
   const f = document.getElementById('add-contacto-form');
   f.style.display = f.style.display==='none' ? 'block' : 'none';
   document.getElementById('ct-fecha').value = today();
 }
 
-function guardarContacto() {
+function guardarContactoVIEJA() {
   if (!clienteActivo) return;
   const fecha = document.getElementById('ct-fecha').value;
   const tipo = document.getElementById('ct-tipo').value;
@@ -2383,6 +2383,78 @@ function guardarContacto() {
   toast('Contacto registrado ✓');
 }
 
+function renderFichaHistorial(c) {
+  const h = (c.historial||[]).map((x,i)=>({...x,_i:i})).sort((a,b)=>String(b.fecha)>String(a.fecha)?1:-1);
+  document.getElementById('fc-historial-list').innerHTML = h.length
+    ? h.map(x=>`<div class="timeline-item"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><div class="tl-date">${fmtDate(x.fecha)} · <span class="tl-type">${x.tipo}</span></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn-icon" title="Editar" onclick="editarContacto(${x._i})">✏️</button><button class="btn-icon" title="Eliminar" onclick="eliminarContacto(${x._i})">🗑</button></div></div><div class="tl-desc">${x.nota||''}</div>${x.proximo?`<div style="font-size:10px;color:var(--blue);font-family:sans-serif;margin-top:2px">📅 Próx: ${fmtDate(x.proximo)}</div>`:''}</div>`).join('')
+    : '<p class="text-muted">Sin registro de contactos. Usá "+ Registrar contacto" para ir registrando cada interacción.</p>';
+}
+
+let contactoEditandoIdx = null;
+
+function showAddContacto() {
+  contactoEditandoIdx = null;
+  const f = document.getElementById('add-contacto-form');
+  const abrir = f.style.display === 'none';
+  f.style.display = abrir ? 'block' : 'none';
+  if (abrir) {
+    document.getElementById('ct-fecha').value = today();
+    document.getElementById('ct-tipo').value = 'Contacto realizado';
+    document.getElementById('ct-nota').value = '';
+    document.getElementById('ct-proximo').value = '';
+  }
+}
+
+function editarContacto(idx) {
+  if (!clienteActivo || !clienteActivo.historial || !clienteActivo.historial[idx]) return;
+  const x = clienteActivo.historial[idx];
+  const esFecha = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v||''));
+  contactoEditandoIdx = idx;
+  document.getElementById('add-contacto-form').style.display = 'block';
+  document.getElementById('ct-fecha').value = esFecha(x.fecha) ? x.fecha : '';
+  document.getElementById('ct-tipo').value = x.tipo || 'Contacto realizado';
+  if (!document.getElementById('ct-tipo').value) document.getElementById('ct-tipo').value = 'Contacto realizado';
+  document.getElementById('ct-nota').value = x.nota || '';
+  document.getElementById('ct-proximo').value = esFecha(x.proximo) ? x.proximo : '';
+  document.getElementById('add-contacto-form').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function guardarCambiosContactos(msg) {
+  const idx = clientes.findIndex(c=>c.id===clienteActivo.id);
+  if (idx>-1) clientes[idx] = clienteActivo;
+  save(true); guardarClienteEnNube(clienteActivo); renderAll();
+  const id = clienteActivo.id;
+  openFicha(id);
+  switchFichaTab('seguimiento', document.querySelector('#modal-ficha .tab[onclick*="seguimiento"]'));
+  toast(msg);
+}
+
+function eliminarContacto(idx) {
+  if (!clienteActivo || !clienteActivo.historial || !clienteActivo.historial[idx]) return;
+  if (!confirm('¿Eliminar este contacto del historial?')) return;
+  clienteActivo.historial.splice(idx, 1);
+  contactoEditandoIdx = null;
+  guardarCambiosContactos('Contacto eliminado ✓ (si hace falta, corregí la fecha en la pestaña Info)');
+}
+
+function guardarContacto() {
+  if (!clienteActivo) return;
+  const fecha = document.getElementById('ct-fecha').value;
+  const tipo = document.getElementById('ct-tipo').value;
+  const nota = document.getElementById('ct-nota').value;
+  const proximo = document.getElementById('ct-proximo').value;
+  if (!fecha||!tipo) { toast('Fecha y tipo son obligatorios'); return; }
+  if (!clienteActivo.historial) clienteActivo.historial = [];
+  const editando = contactoEditandoIdx !== null && clienteActivo.historial[contactoEditandoIdx];
+  if (editando) clienteActivo.historial[contactoEditandoIdx] = {fecha, tipo, nota, proximo};
+  else clienteActivo.historial.push({fecha, tipo, nota, proximo});
+  contactoEditandoIdx = null;
+  if (proximo) clienteActivo.proximoSeguimiento = proximo;
+  if (tipo==='Compra registrada') clienteActivo.ultimaCompra = fecha;
+  document.getElementById('add-contacto-form').style.display = 'none';
+  document.getElementById('ct-nota').value = '';
+  guardarCambiosContactos(editando ? 'Contacto actualizado ✓' : 'Contacto registrado ✓');
+}
 // ============================================================
 // ACCIONES RÁPIDAS
 // ============================================================
