@@ -2065,9 +2065,9 @@ function renderFichaCompras(c) {
     return;
   }
 
-  const totalUSD = comprasCalc.reduce((s,x)=>s+x.montoUSD,0);
-  const avgUSD = totalUSD/comprasCalc.length;
-  const maxUSD = Math.max(...comprasCalc.map(x=>x.montoUSD));
+  const totalUSD = compras.reduce((s,x)=>s+x.montoUSD,0);
+  const avgUSD = totalUSD/compras.length;
+  const maxUSD = Math.max(...compras.map(x=>x.montoUSD));
 
   // Detect buying pattern
   const dates = comprasCalc.map(x=>new Date(x.fecha)).sort((a,b)=>a-b);
