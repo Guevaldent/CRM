@@ -2066,7 +2066,7 @@ function renderFichaCompras(c) {
   }
 
   const totalUSD = compras.reduce((s,x)=>s+x.montoUSD,0);
-  const avgUSD = totalUSD/compras.length;
+  const avgUSD = comprasCalc.reduce((s,x)=>s+x.montoUSD,0)/comprasCalc.length;
   const maxUSD = Math.max(...compras.map(x=>x.montoUSD));
 
   // Detect buying pattern
