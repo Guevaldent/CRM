@@ -824,6 +824,23 @@ const MONTHLY_RATES={"2026-05-01": 1450.0, "2026-04-01": 1430.0, "2026-03-01": 1
 </script>
 <script>
 
+// ===== SEGURIDAD: clave de acceso =====
+let GVD_TOKEN = localStorage.getItem('gvd_token') || '';
+function pedirClave(msg) {
+  const k = prompt(msg || 'Ingresá la clave del CRM:');
+  if (k && k.trim()) { GVD_TOKEN = k.trim(); localStorage.setItem('gvd_token', GVD_TOKEN); return true; }
+  return false;
+}
+const _fetchOriginal = window.fetch.bind(window);
+window.fetch = function(url, opts) {
+  try {
+    if (typeof url === 'string' && url.indexOf('script.google.com') > -1 && opts && typeof opts.body === 'string') {
+      const o = JSON.parse(opts.body); o.token = GVD_TOKEN;
+      opts = Object.assign({}, opts, { body: JSON.stringify(o) });
+    }
+  } catch(e) {}
+  return _fetchOriginal(url, opts);
+};
 let SCRIPT_URL = localStorage.getItem('gvd_script_url') || 'https://script.google.com/macros/s/AKfycbzDVAE8CL1XMV8D1CxFkQnxhp8aXlM8RRWDqR063Vs1sHCPGXdwv5gWxPOZTFWpJXHN/exec';
 let cloudSyncEnabled = !!SCRIPT_URL;
 let saveTimeout = null;
@@ -872,7 +889,7 @@ function jsonpLoad(url) {
       if (script.parentNode) script.parentNode.removeChild(script);
     }
     script.onerror = () => { cleanup(); reject(new Error('Script error')); };
-    script.src = url + '?action=load&callback=' + cbName;
+    script.src = url + '?action=load&token=' + encodeURIComponent(GVD_TOKEN) + '&callback=' + cbName;
     document.head.appendChild(script);
   });
 }
@@ -971,8 +988,9 @@ async function loadFromCloud() {
   if (!cloudSyncEnabled || !SCRIPT_URL) return false;
   setSyncStatus('saving');
   try {
+    if (!GVD_TOKEN && !pedirClave()) { setSyncStatus('error'); return false; }
     const data = await jsonpLoad(SCRIPT_URL);
-    if (!data.ok) throw new Error(data.error || 'Error');
+    if (!data.ok) { if (/autoriz/i.test(data.error || '')) { GVD_TOKEN = ''; localStorage.removeItem('gvd_token'); setSyncStatus('error'); alert('Clave incorrecta. Recargá la página para volver a intentar.'); } throw new Error(data.error || 'Error'); }
     if (data.clientes && data.clientes.length > 0) {
       clientes = cleanDates(data.clientes.map(c => ({
         ...c,
@@ -1122,7 +1140,7 @@ function testConnection() {
     clearTimeout(timeout);
     el.innerHTML = '❌ No se pudo cargar el script. Verificá la URL.';
   };
-  script.src = url + '?action=load&callback=' + cbName;
+  script.src = url + '?action=load&token=' + encodeURIComponent(GVD_TOKEN) + '&callback=' + cbName;
   document.head.appendChild(script);
 }
 
